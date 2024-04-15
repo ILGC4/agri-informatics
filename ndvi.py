@@ -43,5 +43,5 @@ def to_ndvi(image_path):
     plt.show()
 
 if __name__ == "__main__":
-    image_path = '/Users/chaitanyamodi/Downloads/Images/20240218_052534_14_24d5_3B_AnalyticMS_SR_8b.tif'
+    image_path = '/Users/chaitanyamodi/Downloads/Images/20240327_052150_19_24f3_3B_AnalyticMS_SR_8b.tif'
     to_ndvi(image_path)

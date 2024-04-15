@@ -63,9 +63,6 @@ class Map(leafmap.Map):
             print("No data to export")
 
 
-
-
-
 @solara.component
 def Page():
     with solara.AppBarTitle():
@@ -106,7 +103,7 @@ def Page():
 
 
     def export_geojson():
-        file_path=r'C:\Users\iamzo\Desktop\ilgc project\agri-informatics\output.geojson'
+        file_path=r'/Users/chaitanyamodi/Downloads/agri-informatics/Data/output.geojson'
         map_instance.export(file_path)
 
 
