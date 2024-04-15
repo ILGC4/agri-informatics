@@ -1,8 +1,8 @@
 # agri-informatics
 Creating a sugarcane mill management tool
 
-##Jupyter Notebooks
+## Jupyter Notebooks
 To play aorund with and experiment with code
 
-##Python Utils Scripts
+## Python Utils Scripts
 Final working code
