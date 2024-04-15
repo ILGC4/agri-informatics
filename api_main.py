@@ -1,5 +1,5 @@
 import asyncio
-from api_utils import PlanetData 
+from Utils.api_utils import PlanetData 
 async def main():
     credentials = {'API_KEY': 'PLAKdc2fbb92b95b4abea465658318f59e1a'} # mine (chaitanya)
     geom = {
