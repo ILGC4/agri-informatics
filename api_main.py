@@ -23,7 +23,7 @@ async def main():
         cloud_cover_filter_value=(0, 20),  # max cloud cover of 20%
         item_types=['PSScene'],  # satellite images
         limit=10,  # limit the number of images to retrieve
-        directory="/Users/chaitanyamodi/Downloads/Images"  # directory to save downloaded stuff
+        directory="/Users/chaitanyamodi/Downloads/agri-informatics/Images/"  # directory to save downloaded stuff
     )
     
     results, item_list, search_df = await planet_data.download_multiple_assets(geom=geom, asset_type_id='ortho_analytic_8b_sr')
