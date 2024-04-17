@@ -75,9 +75,6 @@ class Map(leafmap.Map):
         else:
             print("No data to export")
 
-    def clear_drawings(self):
-        self.draw_control.clear() 
-
 
 
 
@@ -124,7 +121,7 @@ def Page():
 
 
     def export_geojson():
-        file_path=r'.\Data\output.geojson' 
+        file_path=r'.\Data\output.geojson'
         map_instance.export(file_path)
 
 
