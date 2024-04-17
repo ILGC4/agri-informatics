@@ -4,6 +4,8 @@ from planet import Session, data_filter,reporting
 import os
 import asyncio
 import pandas as pd
+import json
+
 class PlanetData():
     
     def __init__(self,credentials,clear_percent_filter_value,date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output"):
@@ -158,5 +160,23 @@ class PlanetData():
 
         results = await asyncio.gather(*download_tasks, return_exceptions=True)  # retry logic inside download_asset
         return results, item_list, search_df
+    
+    
+def read_geojson(file_path):
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+        geometries = []
+        #geojson is dict and a collection
+        if isinstance(data, dict) and data.get('type', '') == 'FeatureCollection':
+            for feature in data['features']:
+                geometries.append(feature['geometry'])
+        elif isinstance(data, list):  #geojson has a list of polygons
+            for feature in data:
+                if 'geometry' in feature:
+                    geometries.append(feature['geometry'])
+        else:  #geojson has one polygon, is a dict but no collection
+            if 'geometry' in data:
+                geometries.append(data['geometry'])
+        return geometries #return is a list of geometries if there are multiple polygons
 
     
