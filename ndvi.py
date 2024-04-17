@@ -21,7 +21,7 @@ def to_ndvi(images):
     red = normalized_image[5,:,:]
     nir = normalized_image[7,:,:]
     
-    ndvi = (nir - red) / (nir + red + 1e-15) # add + 1e-15 to avoid division by zero
+    ndvi = (nir - red) / (nir + red + 1e-15) # added + 1e-15 to avoid division by zero
 
     plt.figure(figsize=(15, 6))
     # Plot RGB
