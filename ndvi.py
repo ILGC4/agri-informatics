@@ -1,9 +1,11 @@
 import rasterio
 import numpy as np
 import matplotlib.pyplot as plt
+import asyncio
+import api_main 
 
-def to_ndvi(image_path):
-    with rasterio.open(image_path) as src:
+def to_ndvi(images):
+    with rasterio.open(images) as src:
         image = src.read()
         meta = src.meta
     
@@ -19,7 +21,7 @@ def to_ndvi(image_path):
     red = normalized_image[5,:,:]
     nir = normalized_image[7,:,:]
     
-    ndvi = (nir - red) / (nir + red) # add + 1e-15 to avoid division by zero
+    ndvi = (nir - red) / (nir + red + 1e-15) # add + 1e-15 to avoid division by zero
 
     plt.figure(figsize=(15, 6))
     # Plot RGB
@@ -37,11 +39,12 @@ def to_ndvi(image_path):
     plt.xlabel('Column')
     plt.ylabel('Row')
     plt.tight_layout()
-    
-    # Save it
-    plt.savefig('/Users/chaitanyamodi/Downloads/Images/ndvi_plot2.png')
     plt.show()
 
+async def process_images():
+    tif_files = await api_main.main()  # retrieve .tif files from api_main
+    for image in tif_files:
+        to_ndvi(image)
+
 if __name__ == "__main__":
-    image_path = '/Users/chaitanyamodi/Downloads/Images/20240327_052150_19_24f3_3B_AnalyticMS_SR_8b.tif'
-    to_ndvi(image_path)
+    asyncio.run(process_images())
