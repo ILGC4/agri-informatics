@@ -3,8 +3,10 @@ import solara
 from ipyleaflet import Map, DrawControl
 import json
 from leafmap.toolbar import change_basemap
+import os
+import uuid
 
-global_geojson = None #cause literally nothing else was working i wanna kms so bad
+global_geojson = [] #cause literally nothing else was working i wanna kms so bad
 
 zoom = solara.reactive(5)
 center = solara.reactive((22.0, 78.0))
@@ -21,6 +23,14 @@ locations = {
         "Lakhimpur": [27.9506, 80.7821]
 }
 selected_location = solara.reactive("Select a location")
+
+def delete_geojson_on_startup(file_path):
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted {file_path} successfully.")
+    except Exception as e:
+        print(f"Failed to delete {file_path}: {e}")
 
 
 class Map(leafmap.Map):
@@ -39,9 +49,6 @@ class Map(leafmap.Map):
         self.draw_control = DrawControl()
         self.add_control(self.draw_control)
 
-        # Initialize a variable to hold the GeoJSON data
-        self.draw_data = None
-
         # Set up event handling for drawing on the map
         self.draw_control.on_draw(self.handle_draw)
 
@@ -49,18 +56,27 @@ class Map(leafmap.Map):
         # Store the drawn GeoJSON data
         global global_geojson
         if action == "created":
-            global_geojson=geo_json
-            print("Shape drawn and stored: ", global_geojson)
+            # Assign a unique identifier to the geo_json
+            global_geojson.append(geo_json)
+            print("Shape drawn and stored: ", geo_json)
+        elif action == "deleted": 
+            # Remove the feature with the matching ID
+            delete = geo_json['geometry']['coordinates']
+            global_geojson=[x for x in global_geojson if x['geometry']['coordinates'] != delete]
+            print("Shape deleted: ", geo_json)   
 
     def export(self, file_path):
         global global_geojson
-        print("this is the data:", global_geojson)
+        print("this is the data:", global_geojson) 
         if global_geojson is not None:
             with open(file_path, "w") as f:
                 json.dump(global_geojson, f)
             print("GeoJSON data exported to: ", file_path)
         else:
             print("No data to export")
+
+    def clear_drawings(self):
+        self.draw_control.clear() 
 
 
 
@@ -94,7 +110,7 @@ def Page():
     
     def reset_map():
         global global_geojson
-        global_geojson = None
+        global_geojson = []
         print("Resetting map to default location and zoom")
         default_center = locations["Default"]
         center.set(default_center)
@@ -102,11 +118,13 @@ def Page():
         map_instance.center = default_center
         map_instance.zoom = 5
         selected_location.set("Select a location")  # Optionally reset the dropdown
+        delete_geojson_on_startup(r'.\Data\output.geojson')
+        map_instance.clear_drawings()
         print(f"Map reset to center: {default_center} and zoom: 5")
 
 
     def export_geojson():
-        file_path=r'C:\Users\iamzo\Desktop\ilgc project\agri-informatics\output.geojson'
+        file_path=r'.\Data\output.geojson' 
         map_instance.export(file_path)
 
 
@@ -122,17 +140,22 @@ def Page():
             style={"width": "100%", "maxWidth": "400px", "fontSize": "16px", "marginTop":"5px", "textAlign": "center", "display":"block",
                    "zIndex": "1000","maxHeight": "200px"}
         )
-
-        solara.Button(
-            label="Reset Map",
-            on_click=reset_map,
-            style={"width": "200px", "marginTop": "2px", "fontSize": "16px", "backgroundColor": "#007BFF", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
-        )
-        solara.Button(
-            label="Export GeoJSON",
-            on_click=export_geojson,
-            style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
-        )
+        with solara.Row(justify="center", style={"marginTop": "10px"}):
+            solara.Button(
+                label="Reset Map",
+                on_click=reset_map,
+                style={"width": "200px", "marginTop": "2px", "fontSize": "16px", "backgroundColor": "#007BFF", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
+            )
+            solara.Button(
+                label="Export GeoJSON",
+                on_click=export_geojson,
+                style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
+            )
+            # solara.Button(
+            #     label="Display Plot On Map",
+            #     on_click=whatever,
+            #     style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
+            # )
 
     map_instance.element(
         zoom=zoom.value,
