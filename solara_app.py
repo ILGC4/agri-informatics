@@ -115,7 +115,6 @@ def Page():
         map_instance.zoom = 5
         selected_location.set("Select a location")  # Optionally reset the dropdown
         delete_geojson_on_startup(r'.\Data\output.geojson')
-        map_instance.clear_drawings()
         print(f"Map reset to center: {default_center} and zoom: 5")
 
 
@@ -148,7 +147,7 @@ def Page():
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
             # solara.Button(
-            #     label="Display Plot On Map",
+            #     label="Display Plots",
             #     on_click=whatever,
             #     style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             # )
