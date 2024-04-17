@@ -4,7 +4,6 @@ from ipyleaflet import Map, DrawControl
 import json
 from leafmap.toolbar import change_basemap
 import os
-import uuid
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
 
