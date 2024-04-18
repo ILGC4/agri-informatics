@@ -4,6 +4,9 @@ from ipyleaflet import Map, DrawControl
 import json
 from leafmap.toolbar import change_basemap
 import os
+from ndvi import process_images
+import asyncio
+from api_main import main
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
 
@@ -74,9 +77,20 @@ class Map(leafmap.Map):
         else:
             print("No data to export")
 
+# ndvi stuff
+async def run_process_images():
+    await process_images()  # this calls the imported asynchronous function
 
+def start_async_process():
+    asyncio.create_task(run_process_images())
 
+# # geojson call
+# async def get_geom():
+#     geom_data = await main()  # Call main function to retrieve GeoJSON data
+#     print("GeoJSON data received:", geom_data)
 
+# def start_async_process():
+#     asyncio.create_task(get_geom())
 
 @solara.component
 def Page():
@@ -84,7 +98,6 @@ def Page():
         solara.Text("Sugarmill Farm Management Tool", style={"fontSize": "24px", "fontWeight": "bold", "textAlign": "center", "alignItems": "center"})
     
     map_instance = Map()
-
 
     def on_location_change(value):
         # Update the map center when the location changes
@@ -114,14 +127,13 @@ def Page():
         map_instance.center = default_center
         map_instance.zoom = 5
         selected_location.set("Select a location")  # Optionally reset the dropdown
-        delete_geojson_on_startup(r'.\Data\output.geojson')
+        delete_geojson_on_startup(r'./Data/output.geojson')
         print(f"Map reset to center: {default_center} and zoom: 5")
 
 
     def export_geojson():
-        file_path=r'.\Data\output.geojson'
+        file_path=r'./Data/output.geojson'
         map_instance.export(file_path)
-
 
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
@@ -146,11 +158,11 @@ def Page():
                 on_click=export_geojson,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
-            # solara.Button(
-            #     label="Display Plots",
-            #     on_click=whatever,
-            #     style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
-            # )
+            solara.Button(
+                label="Display Plots",
+                on_click=start_async_process,
+                style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
+            )
 
     map_instance.element(
         zoom=zoom.value,
