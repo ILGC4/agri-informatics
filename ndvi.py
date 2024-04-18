@@ -2,7 +2,7 @@ import rasterio
 import numpy as np
 import matplotlib.pyplot as plt
 import asyncio
-import api_main 
+from api_main import filter_tiff_files
 
 def to_ndvi(images):
     with rasterio.open(images) as src:
@@ -42,7 +42,7 @@ def to_ndvi(images):
     plt.show()
 
 async def process_images():
-    tif_files = await api_main.main()  # retrieve .tif files from api_main
+    tif_files = await filter_tiff_files()  # retrieve .tif files from api_main
     for image in tif_files:
         to_ndvi(image)
 
