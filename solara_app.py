@@ -4,9 +4,13 @@ from ipyleaflet import Map, DrawControl
 import json
 from leafmap.toolbar import change_basemap
 import os
-from ndvi import process_images
-import asyncio
+from pathlib import Path
+import time
 from api_main import main
+from solara.lab import task
+import io
+from PIL import Image as PILImage
+import matplotlib.pyplot as plt
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
 
@@ -33,7 +37,6 @@ def delete_geojson_on_startup(file_path):
             print(f"Deleted {file_path} successfully.")
     except Exception as e:
         print(f"Failed to delete {file_path}: {e}")
-
 
 class Map(leafmap.Map):
     def __init__(self, **kwargs):
@@ -74,30 +77,42 @@ class Map(leafmap.Map):
             with open(file_path, "w") as f:
                 json.dump(global_geojson, f)
             print("GeoJSON data exported to: ", file_path)
+            fetch_api()
         else:
             print("No data to export")
 
+@task
+async def fetch_api():
+    await main()
+
 # ndvi stuff
-async def run_process_images():
-    await process_images()  # this calls the imported asynchronous function
+def get_recent_images(directory_path, time_limit_minutes=2):
+    # Path to the directory
+    path = Path(directory_path)
+    print('in get_recent_images')
+    # Current time in seconds since the epoch
+    current_time = time.time()
+    # Time limit in seconds
+    time_limit_seconds = time_limit_minutes * 60
+    
+    # Get all image files in the directory with specific extensions
+    image_files = [f for f in path.glob('*') if f.suffix.lower() in ['.jpg', '.png']]
+    # Filter files modified within the last `time_limit_minutes` minutes
+    recent_files = [f for f in image_files if current_time - f.stat().st_mtime < time_limit_seconds]
 
-def start_async_process():
-    asyncio.create_task(run_process_images())
-
-# # geojson call
-# async def get_geom():
-#     geom_data = await main()  # Call main function to retrieve GeoJSON data
-#     print("GeoJSON data received:", geom_data)
-
-# def start_async_process():
-#     asyncio.create_task(get_geom())
+    # Sort files by modification time (newest first)
+    recent_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    
+    return recent_files
 
 @solara.component
 def Page():
+    map_instance = Map()
+    images_data = solara.reactive([])
+
     with solara.AppBarTitle():
         solara.Text("Sugarmill Farm Management Tool", style={"fontSize": "24px", "fontWeight": "bold", "textAlign": "center", "alignItems": "center"})
     
-    map_instance = Map()
 
     def on_location_change(value):
         # Update the map center when the location changes
@@ -135,6 +150,56 @@ def Page():
         file_path=r'./Data/output.geojson'
         map_instance.export(file_path)
 
+    def get_and_display_recent_images():
+        directory_path = './plots/'  # Specify the directory path
+        print('in get_and_display_recent_images')
+        recent_images = get_recent_images(directory_path)
+        # plot images using plt
+        for img_path in recent_images:
+            try:
+                with PILImage.open(img_path) as img:
+                    buf = io.BytesIO()
+                    img.save(buf, format='PNG')
+                    buf.seek(0)
+                    image_bytes = buf.read()
+                    # Create an image widget for each image
+                    image_widget = solara.Image(value=image_bytes, format='png', width='100%')
+                    images_data.append(image_widget)
+            except Exception as e:
+                print(f"Failed to process image {img_path}: {str(e)}")
+                continue
+
+        # Create a container for image widgets
+        # images_container = solara.VBox()
+
+        # if not recent_images:
+        #     # Display a message if no images are found
+        #     return solara.Text("No recent images found")
+
+        # images_widgets = []
+        # for img_path in recent_images:
+        #     try:
+        #         with PILImage.open(img_path) as img:
+        #             buf = io.BytesIO()
+        #             img.save(buf, format='PNG')
+        #             buf.seek(0)
+        #             image_bytes = buf.read()
+        #             # Create an image widget for each image
+        #             image_widget = solara.Image(value=image_bytes, format='png', width='100%')
+        #             images_widgets.append(image_widget)
+        #     except Exception as e:
+        #         print(f"Failed to process image {img_path}: {str(e)}")
+        #         continue
+
+        # if images_widgets:
+        #     # Update the container with all the image widgets
+        #     images_container.children = images_widgets
+        # else:
+        #     # Display a message if images were found but not processed
+        #     images_container.children = [solara.Text("No images processed successfully")]
+
+        # return images_container
+       
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
         # Select component for location selection
@@ -160,9 +225,11 @@ def Page():
             )
             solara.Button(
                 label="Display Plots",
-                on_click=start_async_process,
+                on_click=get_and_display_recent_images,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
+            
+            # button = solara.Button("Display Plots", on_click=get_and_display_recent_images)
 
     map_instance.element(
         zoom=zoom.value,

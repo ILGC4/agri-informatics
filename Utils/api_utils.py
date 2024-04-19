@@ -177,6 +177,7 @@ def read_geojson(file_path):
         else:  #geojson has one polygon, is a dict but no collection
             if 'geometry' in data:
                 geometries.append(data['geometry'])
-        return geometries #return is a list of geometries if there are multiple polygons
-
-    
+        if len(geometries) == 1:
+            return geometries[0]  # Return a single geometry dictionary if only one geometry
+        else:
+            return geometries
