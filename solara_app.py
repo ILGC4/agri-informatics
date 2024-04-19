@@ -168,37 +168,6 @@ def Page():
             except Exception as e:
                 print(f"Failed to process image {img_path}: {str(e)}")
                 continue
-
-        # Create a container for image widgets
-        # images_container = solara.VBox()
-
-        # if not recent_images:
-        #     # Display a message if no images are found
-        #     return solara.Text("No recent images found")
-
-        # images_widgets = []
-        # for img_path in recent_images:
-        #     try:
-        #         with PILImage.open(img_path) as img:
-        #             buf = io.BytesIO()
-        #             img.save(buf, format='PNG')
-        #             buf.seek(0)
-        #             image_bytes = buf.read()
-        #             # Create an image widget for each image
-        #             image_widget = solara.Image(value=image_bytes, format='png', width='100%')
-        #             images_widgets.append(image_widget)
-        #     except Exception as e:
-        #         print(f"Failed to process image {img_path}: {str(e)}")
-        #         continue
-
-        # if images_widgets:
-        #     # Update the container with all the image widgets
-        #     images_container.children = images_widgets
-        # else:
-        #     # Display a message if images were found but not processed
-        #     images_container.children = [solara.Text("No images processed successfully")]
-
-        # return images_container
        
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
@@ -228,8 +197,6 @@ def Page():
                 on_click=get_and_display_recent_images,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
-            
-            # button = solara.Button("Display Plots", on_click=get_and_display_recent_images)
 
     map_instance.element(
         zoom=zoom.value,
