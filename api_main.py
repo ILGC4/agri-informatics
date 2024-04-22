@@ -16,11 +16,12 @@ async def main():
     planet_data = PlanetData(
         credentials=credentials,
         clear_percent_filter_value=(80, 100),  # clear images between 80% to 100%
-        date_range={'gte': '2024-04-1', 'lte': '2024-04-7'}, 
+        date_range={'gte': '2024-04-1', 'lte': '2024-04-16'}, 
         cloud_cover_filter_value=(0, 20),  # max cloud cover of 20%
         item_types=['PSScene'],  # satellite images
         limit=10,  # limit the number of images to retrieve
-        directory="./Images/"  # directory to save downloaded stuff
+        directory="./Images/", # directory to save downloaded stuff
+        frequency=5
     )
     
     # Download assets based on the provided geometry
