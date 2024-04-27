@@ -4,11 +4,16 @@ from ipyleaflet import Map, DrawControl
 import json
 from leafmap.toolbar import change_basemap
 import os
+import ipywidgets as widgets
+import tempfile
+import asyncio
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
 
 zoom = solara.reactive(5)
 center = solara.reactive((22.0, 78.0))
+message = solara.reactive("")
+show_message = solara.reactive(False)
 
 locations = {
         "Default": [22.0, 78.0],
@@ -23,6 +28,17 @@ locations = {
 }
 selected_location = solara.reactive("Select a location")
 
+async def hide_message_after_delay(delay):
+    await asyncio.sleep(delay)
+    show_message.set(False)
+    message.set("")
+
+@solara.component
+def FileUploadMessage():
+    if show_message.get():
+        return solara.Text(message.get(), style={"color": "green", "fontWeight": "bold"})
+    return None
+
 def delete_geojson_on_startup(file_path):
     try:
         if os.path.exists(file_path):
@@ -31,6 +47,27 @@ def delete_geojson_on_startup(file_path):
     except Exception as e:
         print(f"Failed to delete {file_path}: {e}")
 
+def handle_upload(change):
+    if change.new:
+        uploaded_file=change.new[0]
+        content=uploaded_file['content']
+        geo_json=json.loads(content.decode('utf-8'))
+        print("File uploaded: ", geo_json)
+        map_instance.draw_geojson(geo_json)
+        message.set("File uploaded successfully!")
+        show_message.set(True)
+        asyncio.create_task(hide_message_after_delay(5))
+
+
+file_upload=widgets.FileUpload(
+    accept='.geojson',
+    multiple=False
+)
+file_upload.observe(handle_upload, names='value')
+
+@solara.component
+def FileDrop():
+    return solara.VBox([file_upload, FileUploadMessage()])
 
 class Map(leafmap.Map):
     def __init__(self, **kwargs):
@@ -50,6 +87,84 @@ class Map(leafmap.Map):
 
         # Set up event handling for drawing on the map
         self.draw_control.on_draw(self.handle_draw)
+
+    def zoom_to_bounds(self, bounds):
+        try:
+            print("Attempting to zoom to bounds:", bounds)
+            super().zoom_to_bounds(bounds) 
+        except Exception as e:
+            print(f"Error during zoom: {str(e)}")
+
+    def extract_coords(self, geometry):
+        coords = []
+        geom_type = geometry['type']
+        if geom_type == 'Polygon':
+            for ring in geometry['coordinates']:
+                coords.extend(ring)
+        return coords
+    
+    def zoom_to_geojson(self, geo_json):
+        bounds = self.get_bounds_from_geojson(geo_json)
+        if bounds:
+            try:
+                min_lat, min_lon = bounds[0]
+                max_lat, max_lon = bounds[1]
+                center_lat = (min_lat + max_lat) / 2
+                center_lon = (min_lon + max_lon) / 2
+                center_coords=[center_lat, center_lon]
+                center.set(center_coords)
+                zoom.set(20)
+                map_instance.center=center_coords
+                map_instance.zoom=10
+                print(f"Manually set center to: {center_coords}, zoom level to 20")
+            except Exception as e:
+                print(f"Failed manual zoom: {str(e)}")
+        else:
+            print("No valid bounds found to apply zoom.")
+
+    def get_bounds_from_geojson(self, geo_json):
+        coords = []
+        for feature in geo_json['features']:
+            geom = feature['geometry']
+            extracted_coords = self.extract_coords(geom)
+            coords.extend(extracted_coords)
+        if not coords:
+            print("No coordinates extracted, cannot compute bounds.")
+            return None
+        min_lat = min(lat for _, lat in coords) 
+        max_lat = max(lat for _, lat in coords)
+        min_lon = min(lon for lon, _ in coords)
+        max_lon = max(lon for lon, _ in coords)
+        bounds = [(min_lat, min_lon), (max_lat, max_lon)]
+        print("Computed bounds:", bounds)
+        return bounds
+
+
+    
+    def draw_geojson(self, geo_json_list):
+        # print("Type of geo_json:", type(geo_json_list))
+        # print("Content of geo_json:", geo_json_list)
+        if isinstance(geo_json_list, list):
+        # Construct a proper GeoJSON FeatureCollection
+            geo_json = {
+                "type": "FeatureCollection",
+                "features": geo_json_list
+            }
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".geojson", mode="w") as tmp:
+                    json.dump(geo_json, tmp)
+                    tmp.flush()
+                    tmp_path=tmp.name
+                self.add_geojson(tmp_path, layer_name="Uploaded Layer")
+                os.unlink(tmp_path)
+                print("GeoJSON added to map.")
+                self.zoom_to_geojson(geo_json)
+            except Exception as e:
+                print(f"Failed to load GeoJSON: {e}")
+        print("Current layers on map:", [layer.name for layer in self.layers])
+
+
+
 
     def handle_draw(self, target, action, geo_json):
         # Store the drawn GeoJSON data
@@ -80,11 +195,12 @@ class Map(leafmap.Map):
 
 @solara.component
 def Page():
+    global map_instance
+    map_instance = Map()
     with solara.AppBarTitle():
         solara.Text("Sugarmill Farm Management Tool", style={"fontSize": "24px", "fontWeight": "bold", "textAlign": "center", "alignItems": "center"})
     
-    map_instance = Map()
-
+        
 
     def on_location_change(value):
         # Update the map center when the location changes
@@ -103,7 +219,7 @@ def Page():
             print(f"Center and zoom updated to: {new_center}, {new_zoom}")
         else:
             print("Invalid location selected")
-    
+
     def reset_map():
         global global_geojson
         global_geojson = []
@@ -125,6 +241,7 @@ def Page():
 
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
+        FileDrop()
         # Select component for location selection
         solara.Select(
             label="Choose a location:",
@@ -151,7 +268,6 @@ def Page():
             #     on_click=whatever,
             #     style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             # )
-
     map_instance.element(
         zoom=zoom.value,
         on_zoom=zoom.set,
