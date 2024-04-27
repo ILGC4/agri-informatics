@@ -5,10 +5,11 @@ import os
 import asyncio
 import pandas as pd
 import json
+from datetime import timedelta
 
 class PlanetData():
     
-    def __init__(self,credentials,clear_percent_filter_value,date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output"):
+    def __init__(self,credentials,clear_percent_filter_value,date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output", frequency = None):
 
         self.clear_percent_filter_value=clear_percent_filter_value
         self.cloud_cover_filter_value=cloud_cover_filter_value
@@ -17,25 +18,29 @@ class PlanetData():
         self.directory=directory
         self.item_types=item_types
         self.limit=limit
+        self.frequency=frequency
         self.client=self.__get_client__()
 
     def __get_combined_filter__(self):
         all_filters = []
         date_format = "%Y-%m-%d"  # dates are in 'YYYY-MM-DD' format
-
+        
         if self.date_range:
-            if 'gt' in self.date_range and 'lt' not in self.date_range:
-                start_date = datetime.strptime(self.date_range['gt'], date_format)
-                self.date_range_filter = data_filter.date_range_filter("acquired", gt=start_date)
-            elif 'lt' in self.date_range and 'gt' not in self.date_range:
-                end_date = datetime.strptime(self.date_range['lt'], date_format)
-                self.date_range_filter = data_filter.date_range_filter("acquired", lt=end_date)
-            else:
-                start_date = datetime.strptime(self.date_range['gte'], date_format)
-                end_date = datetime.strptime(self.date_range['lte'], date_format)
-                self.date_range_filter = data_filter.date_range_filter("acquired", gt=start_date, lt=end_date)
+            self.__apply_frequency_based_dates__(all_filters, date_format)
 
-            all_filters.append(self.date_range_filter)
+        # if self.date_range:
+        #     if 'gt' in self.date_range and 'lt' not in self.date_range:
+        #         start_date = datetime.strptime(self.date_range['gt'], date_format)
+        #         self.date_range_filter = data_filter.date_range_filter("acquired", gt=start_date)
+        #     elif 'lt' in self.date_range and 'gt' not in self.date_range:
+        #         end_date = datetime.strptime(self.date_range['lt'], date_format)
+        #         self.date_range_filter = data_filter.date_range_filter("acquired", lt=end_date)
+        #     else:
+        #         start_date = datetime.strptime(self.date_range['gte'], date_format)
+        #         end_date = datetime.strptime(self.date_range['lte'], date_format)
+        #         self.date_range_filter = data_filter.date_range_filter("acquired", gt=start_date, lt=end_date)
+
+        #     all_filters.append(self.date_range_filter)
 
         if self.geom!=None:
             geom_filter = data_filter.geometry_filter(self.geom)
@@ -67,6 +72,43 @@ class PlanetData():
         combined_filter = data_filter.and_filter(all_filters)
 
         return combined_filter
+    
+    def __apply_frequency_based_dates__(self, all_filters, date_format):
+        if 'gt' in self.date_range and 'lt' not in self.date_range:
+            start_date = datetime.strptime(self.date_range['gt'], date_format)
+            self.__add_date_filters(start_date, None, all_filters)
+        elif 'lt' in self.date_range and 'gt' not in self.date_range:
+            end_date = datetime.strptime(self.date_range['lt'], date_format)
+            self.__add_date_filters(None, end_date, all_filters)
+        elif 'gte' in self.date_range and 'lte' in self.date_range:
+            start_date = datetime.strptime(self.date_range['gte'], date_format)
+            end_date = datetime.strptime(self.date_range['lte'], date_format)
+            self.__add_date_filters(start_date, end_date, all_filters) 
+
+
+    def __add_date_filters(self, start_date, end_date, all_filters):
+        if start_date and end_date:
+            current_date = start_date
+            while current_date <= end_date:
+                date_filter = data_filter.date_range_filter("acquired", exact=current_date)
+                all_filters.append(date_filter)
+                current_date += timedelta(days=self.frequency)
+        elif start_date:
+            current_date = start_date
+            while True:  # Adjust the logic based on how you want to handle open-ended ranges
+                date_filter = data_filter.date_range_filter("acquired", exact=current_date)
+                all_filters.append(date_filter)
+                current_date += timedelta(days=self.frequency)
+                if current_date > datetime.now():
+                    break
+        elif end_date:
+            current_date = end_date
+            while True:  # Similar handling for open-ended start ranges
+                date_filter = data_filter.date_range_filter("acquired", exact=current_date)
+                all_filters.append(date_filter)
+                current_date -= timedelta(days=self.frequency)
+                if current_date.year < 2000:  # Arbitrary start limit, adjust as needed
+                    break  
     
     def __get_client__(self):
         API_KEY = self.credentials['API_KEY']
@@ -177,6 +219,7 @@ def read_geojson(file_path):
         else:  #geojson has one polygon, is a dict but no collection
             if 'geometry' in data:
                 geometries.append(data['geometry'])
-        return geometries #return is a list of geometries if there are multiple polygons
-
-    
+        if len(geometries) == 1:
+            return geometries[0]  # Return a single geometry dictionary if only one geometry
+        else:
+            return geometries

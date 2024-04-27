@@ -6,31 +6,10 @@ import rasterio
 import numpy as np
 import matplotlib.pyplot as plt
 
-async def main():
-    credentials = {'API_KEY': 'PLAK205900b56fe54efe8c2fd7e456a9a243'} # varchita's
-    
-    # Read the GeoJSON file
-    geom = read_geojson("Data/output.geojson")
-    
-    # Create an instance of the PlanetData class
-    planet_data = PlanetData(
-        credentials=credentials,
-        clear_percent_filter_value=(80, 100),  # clear images between 80% to 100%
-        date_range={'gte': '2024-04-1', 'lte': '2024-04-16'}, 
-        cloud_cover_filter_value=(0, 20),  # max cloud cover of 20%
-        item_types=['PSScene'],  # satellite images
-        limit=10,  # limit the number of images to retrieve
-        directory="./Images/", # directory to save downloaded stuff
-        frequency=5
-    )
-    
-    # Download assets based on the provided geometry
-    results, item_list, search_df = await planet_data.download_multiple_assets(geom=geom, asset_type_id='ortho_analytic_8b_sr')
-    tif_files = [result for result in results if pathlib.Path(result).suffix == '.tif']
-    
+def plot_ndvi(image):
     # counter = 1
     # for image in tif_files:
-    with rasterio.open(tif_files[0]) as src:
+    with rasterio.open(image) as src:
         img = src.read()
         meta = src.meta
     
@@ -65,12 +44,12 @@ async def main():
 
     plt.colorbar(label='NDVI')
     plt.tight_layout()
-    plt.savefig(f'plots/ndvi.png')
+    plt.show()
     # plt.savefig(f'plots/ndvi{counter}.png')
     # plt.close()
-    plt.show()
+    # plt.show()
         # counter += 1
     print('images_saved')
 
-if __name__ == "__main__":
-    asyncio.run(main())
+if __name__ == '__main__':
+    plot_ndvi('Images/20240404_051843_68_2484_3B_AnalyticMS_SR_8b.tif')

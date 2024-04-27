@@ -7,6 +7,13 @@ import os
 import ipywidgets as widgets
 import tempfile
 import asyncio
+from pathlib import Path
+import time
+from api_main import main
+from solara.lab import task
+import io
+from PIL import Image as PILImage
+import matplotlib.pyplot as plt
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
 
@@ -186,17 +193,40 @@ class Map(leafmap.Map):
             with open(file_path, "w") as f:
                 json.dump(global_geojson, f)
             print("GeoJSON data exported to: ", file_path)
+            fetch_api()
         else:
             print("No data to export")
 
+@task
+async def fetch_api():
+    await main()
 
+# ndvi stuff
+def get_recent_images(directory_path, time_limit_minutes=2):
+    # Path to the directory
+    path = Path(directory_path)
+    print('in get_recent_images')
+    # Current time in seconds since the epoch
+    current_time = time.time()
+    # Time limit in seconds
+    time_limit_seconds = time_limit_minutes * 60
+    
+    # Get all image files in the directory with specific extensions
+    image_files = [f for f in path.glob('*') if f.suffix.lower() in ['.jpg', '.png']]
+    # Filter files modified within the last `time_limit_minutes` minutes
+    recent_files = [f for f in image_files if current_time - f.stat().st_mtime < time_limit_seconds]
 
-
+    # Sort files by modification time (newest first)
+    recent_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    
+    return recent_files
 
 @solara.component
 def Page():
     global map_instance
     map_instance = Map()
+    images_data = solara.reactive([])
+
     with solara.AppBarTitle():
         solara.Text("Sugarmill Farm Management Tool", style={"fontSize": "24px", "fontWeight": "bold", "textAlign": "center", "alignItems": "center"})
     
@@ -230,15 +260,33 @@ def Page():
         map_instance.center = default_center
         map_instance.zoom = 5
         selected_location.set("Select a location")  # Optionally reset the dropdown
-        delete_geojson_on_startup(r'.\Data\output.geojson')
+        delete_geojson_on_startup(r'./Data/output.geojson')
         print(f"Map reset to center: {default_center} and zoom: 5")
 
 
     def export_geojson():
-        file_path=r'.\Data\output.geojson'
+        file_path=r'./Data/output.geojson'
         map_instance.export(file_path)
 
-
+    def get_and_display_recent_images():
+        directory_path = './plots/'  # Specify the directory path
+        print('in get_and_display_recent_images')
+        recent_images = get_recent_images(directory_path)
+        # plot images using plt
+        for img_path in recent_images:
+            try:
+                with PILImage.open(img_path) as img:
+                    buf = io.BytesIO()
+                    img.save(buf, format='PNG')
+                    buf.seek(0)
+                    image_bytes = buf.read()
+                    # Create an image widget for each image
+                    image_widget = solara.Image(value=image_bytes, format='png', width='100%')
+                    images_data.append(image_widget)
+            except Exception as e:
+                print(f"Failed to process image {img_path}: {str(e)}")
+                continue
+       
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
         FileDrop()
@@ -263,11 +311,11 @@ def Page():
                 on_click=export_geojson,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
-            # solara.Button(
-            #     label="Display Plots",
-            #     on_click=whatever,
-            #     style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
-            # )
+            solara.Button(
+                label="Display Plots",
+                on_click=get_and_display_recent_images,
+                style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
+            )
     map_instance.element(
         zoom=zoom.value,
         on_zoom=zoom.set,
