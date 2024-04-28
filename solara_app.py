@@ -16,6 +16,8 @@ from PIL import Image as PILImage
 import matplotlib.pyplot as plt
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
+display_images = solara.reactive(False)
+images_figures = solara.reactive([])
 
 zoom = solara.reactive(5)
 center = solara.reactive((22.0, 78.0))
@@ -202,35 +204,81 @@ async def fetch_api():
     await main()
 
 # ndvi stuff
-def get_recent_images(directory_path, time_limit_minutes=2):
-    # Path to the directory
-    path = Path(directory_path)
-    print('in get_recent_images')
-    # Current time in seconds since the epoch
-    current_time = time.time()
-    # Time limit in seconds
-    time_limit_seconds = time_limit_minutes * 60
+# def get_recent_images(directory_path, time_limit_minutes=2):
+#     # Path to the directory
+#     path = Path(directory_path)
+#     print('in get_recent_images')
+#     # Current time in seconds since the epoch
+#     current_time = time.time()
+#     # Time limit in seconds
+#     time_limit_seconds = time_limit_minutes * 60
     
-    # Get all image files in the directory with specific extensions
-    image_files = [f for f in path.glob('*') if f.suffix.lower() in ['.jpg', '.png']]
-    # Filter files modified within the last `time_limit_minutes` minutes
-    recent_files = [f for f in image_files if current_time - f.stat().st_mtime < time_limit_seconds]
+#     # Get all image files in the directory with specific extensions
+#     image_files = [f for f in path.glob('*') if f.suffix.lower() in ['.jpg', '.png']]
+#     # Filter files modified within the last `time_limit_minutes` minutes
+#     recent_files = [f for f in image_files if current_time - f.stat().st_mtime < time_limit_seconds]
 
-    # Sort files by modification time (newest first)
-    recent_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+#     # Sort files by modification time (newest first)
+#     recent_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+#     print(f"Found {len(recent_files)} recent files.")
     
-    return recent_files
+#     return recent_files
+
+def test_get_recent_images(directory_path):
+    path = Path(directory_path)
+    all_files = list(path.glob('*'))  # List all files without filtering
+    print(f"All files in directory: {all_files}")
+    return all_files  # Ensure to return the list of files
+
+
+def get_and_display_recent_images():
+        directory_path = './plots/'  # Specify the directory path
+        print('Fetching recent images...')
+        recent_images = test_get_recent_images(directory_path)
+        # plot images using plt
+        figs=[]
+        if recent_images:
+            for img_path in recent_images:
+                try:
+                    img = plt.imread(img_path)  
+                    fig, ax = plt.subplots()
+                    ax.imshow(img)
+                    ax.axis('off')  # Hide the axes
+                    figs.append(fig)
+                    print(f"Loaded image {img_path}")
+                except Exception as e:
+                    print(f"Failed to process image {img_path}: {str(e)}")
+            if figs:
+                images_figures.set(figs)
+                display_images.set(True)
+                print("Images are ready to be displayed.")
+            else:
+                print("No images were loaded.")
+        else:
+            print("No files in directory.")
+
+def remove_images():
+    display_images.set(False)
+    images_figures.set([])
+    print("Images removed.")
+
+
+@solara.component
+def DisplayImages():
+    if display_images.get():
+        print("Displaying images...")
+        return solara.VBox([solara.FigureMatplotlib(fig) for fig in images_figures.get()])
+    print("No images to display")
+    return None
 
 @solara.component
 def Page():
     global map_instance
     map_instance = Map()
-    images_data = solara.reactive([])
 
     with solara.AppBarTitle():
         solara.Text("Sugarmill Farm Management Tool", style={"fontSize": "24px", "fontWeight": "bold", "textAlign": "center", "alignItems": "center"})
-    
-        
+         
 
     def on_location_change(value):
         # Update the map center when the location changes
@@ -268,24 +316,6 @@ def Page():
         file_path=r'./Data/output.geojson'
         map_instance.export(file_path)
 
-    def get_and_display_recent_images():
-        directory_path = './plots/'  # Specify the directory path
-        print('in get_and_display_recent_images')
-        recent_images = get_recent_images(directory_path)
-        # plot images using plt
-        for img_path in recent_images:
-            try:
-                with PILImage.open(img_path) as img:
-                    buf = io.BytesIO()
-                    img.save(buf, format='PNG')
-                    buf.seek(0)
-                    image_bytes = buf.read()
-                    # Create an image widget for each image
-                    image_widget = solara.Image(value=image_bytes, format='png', width='100%')
-                    images_data.append(image_widget)
-            except Exception as e:
-                print(f"Failed to process image {img_path}: {str(e)}")
-                continue
        
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
@@ -315,6 +345,11 @@ def Page():
                 label="Display Plots",
                 on_click=get_and_display_recent_images,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
+            ) 
+            solara.Button(
+                label="Remove Plots",
+                on_click=remove_images,
+                style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
     map_instance.element(
         zoom=zoom.value,
@@ -325,5 +360,6 @@ def Page():
         toolbar_ctrl=False,
         data_ctrl=False,
     )
+    DisplayImages()
     solara.Text(f"Zoom: {zoom.value}")
     solara.Text(f"Center: {center.value}")
