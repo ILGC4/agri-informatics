@@ -1,2 +1,1 @@
-acquired,anomalous_pixels,clear_confidence_percent,clear_percent,cloud_cover,cloud_percent,ground_control,gsd,heavy_haze_percent,instrument,item_type,light_haze_percent,pixel_resolution,provider,published,publishing_stage,quality_category,satellite_azimuth,satellite_id,shadow_percent,snow_ice_percent,strip_id,sun_azimuth,sun_elevation,updated,view_angle,visible_confidence_percent,visible_percent,id,date
-2024-04-03 05:19:21.259111+00:00,0,95,99,0,0,True,3.4,0,PSB.SD,PSScene,1,3,planetscope,2024-04-03T11:23:37Z,finalized,standard,275.8,24a4,0,0,7218298,135.6,60.5,2024-04-04T04:15:18Z,3.3,86,100,20240403_051921_25_24a4,20240403
+
