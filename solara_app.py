@@ -153,7 +153,7 @@ class Map(leafmap.Map):
     def draw_geojson(self, geo_json_list):
         # print("Type of geo_json:", type(geo_json_list))
         # print("Content of geo_json:", geo_json_list)
-        if isinstance(geo_json_list, list):
+        if isinstance(geo_json_list, list): 
         # Construct a proper GeoJSON FeatureCollection
             geo_json = {
                 "type": "FeatureCollection",
