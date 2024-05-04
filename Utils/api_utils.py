@@ -24,80 +24,53 @@ class PlanetData():
         self.client=self.__get_client__()
 
     def __get_combined_filter__(self):
-        all_filters = []
-        date_format = "%Y-%m-%d"  # dates are in 'YYYY-MM-DD' format
-        
-        # if self.date_range:
-        #     self.__apply_frequency_based_dates__(all_filters, date_format)
+        base_filters = []
 
-        if self.date_range:
-            if 'gt' in self.date_range and 'lt' not in self.date_range:
-                start_date = datetime.strptime(self.date_range['gt'], date_format)
-                self.date_range_filter = data_filter.date_range_filter("acquired", gt=start_date)
-            elif 'lt' in self.date_range and 'gt' not in self.date_range:
-                end_date = datetime.strptime(self.date_range['lt'], date_format)
-                self.date_range_filter = data_filter.date_range_filter("acquired", lt=end_date)
-            else:
-                start_date = datetime.strptime(self.date_range['gte'], date_format)
-                end_date = datetime.strptime(self.date_range['lte'], date_format)
-                self.date_range_filter = data_filter.date_range_filter("acquired", gt=start_date, lt=end_date)
-
-            all_filters.append(self.date_range_filter)
-
-        if self.geom!=None:
+        if self.geom:
             geom_filter = data_filter.geometry_filter(self.geom)
-            all_filters.append(geom_filter)
+            base_filters.append(geom_filter)
 
-        if self.clear_percent_filter_value!=None:
-            clear_percent_filter = data_filter.range_filter('clear_percent',self.clear_percent_filter_value[0],self.clear_percent_filter_value[1])
-            all_filters.append(clear_percent_filter)
-            
-        if self.cloud_cover_filter_value!=None:
-            cloud_cover_filter = data_filter.range_filter('cloud_percent',self.cloud_cover_filter_value[0],self.cloud_cover_filter_value[1])
-            #all_filters.append(cloud_cover_filter)
+        if self.clear_percent_filter_value:
+            clear_percent_filter = data_filter.range_filter('clear_percent', gt=self.clear_percent_filter_value[0], lt=self.clear_percent_filter_value[1])
+            base_filters.append(clear_percent_filter)
 
-        publish_filter = data_filter.string_in_filter('publishing_stage',['finalized']) 
-        all_filters.append(publish_filter)   
+        publish_filter = data_filter.string_in_filter('publishing_stage', ['finalized'])
+        base_filters.append(publish_filter)
 
-        quality_filter = data_filter.string_in_filter('quality_category',['standard']) 
-        all_filters.append(quality_filter) 
+        quality_filter = data_filter.string_in_filter('quality_category', ['standard'])
+        base_filters.append(quality_filter)
 
-        instrument_filter=data_filter.string_in_filter('instrument',['PSB.SD'])
-        #all_filters.append(instrument_filter)
+        # Use generate_date_ranges to get datetime objects for filters
+        date_ranges = self.generate_date_ranges(self.date_range['gte'], self.date_range['lte'], self.frequency)
 
-        type_filter=data_filter.string_in_filter('item_type',['PSScene'])
-        #all_filters.append(type_filter)
+        combined_filters = []
+        for date_range in date_ranges:
+            date_filter = data_filter.date_range_filter("acquired", gte=date_range['gte'], lte=date_range['lte'])
+            combined_filters.append(data_filter.and_filter([date_filter] + base_filters))
 
-        asset_filter=data_filter.asset_filter(['ortho_analytic_8b','ortho_analytic_8b_xml','ortho_udm2'])
-        #all_filters.append(asset_filter)
-
-        combined_filter = data_filter.and_filter(all_filters)
-
-        return combined_filter
+        return combined_filters
     
-    def __apply_frequency_based_dates__(self, all_filters, date_format):
-        if 'gt' in self.date_range and 'lt' not in self.date_range:
-            start_date = datetime.strptime(self.date_range['gt'], date_format)
-            self.__add_date_filters(start_date, None, all_filters)
-        elif 'lt' in self.date_range and 'gt' not in self.date_range:
-            end_date = datetime.strptime(self.date_range['lt'], date_format)
-            self.__add_date_filters(None, end_date, all_filters)
-        elif 'gte' in self.date_range and 'lte' in self.date_range:
-            start_date = datetime.strptime(self.date_range['gte'], date_format)
-            end_date = datetime.strptime(self.date_range['lte'], date_format)
-            self.__add_date_filters(start_date, end_date, all_filters) 
-
-
-    def __add_date_filters(self, start_date, end_date, all_filters):
-        current_date = start_date
+    def generate_date_ranges(self, start_date, end_date, frequency):
+        date_ranges = []
+        current_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        
         while current_date <= end_date:
             next_date = current_date + timedelta(days=1)
             if next_date > end_date:
                 next_date = end_date
-            print(current_date.strftime('%Y-%m-%d'), next_date.strftime('%Y-%m-%d'))
-            date_filter = data_filter.date_range_filter("acquired", gte=current_date, lte=next_date)
-            all_filters.append(date_filter)
-            current_date += timedelta(days=self.frequency) 
+            
+            # Here, store the datetime objects directly rather than converting them to strings
+            date_ranges.append({
+                'gte': current_date,  # Directly use datetime object
+                'lte': next_date      # Directly use datetime object
+            })
+            
+            current_date += timedelta(days=frequency)
+            if current_date > end_date:
+                break
+        print("Date Ranges", date_ranges)
+        return date_ranges
     
     def __get_client__(self):
         API_KEY = self.credentials['API_KEY']
@@ -113,18 +86,33 @@ class PlanetData():
         return request   
 
     async def search(self):
-       
+        combined_filters = self.__get_combined_filter__()
+        item_list_total = []
+        search_df_total = pd.DataFrame()
+
         async with Session() as sess:
-            request=await self.__create_request__()
-            async with Session() as sess:
-                cl = sess.client('data')
-                items = cl.run_search(search_id=request['id'],limit=self.limit)
+            cl = sess.client('data')
+            for each_combined_filter in combined_filters:
+                print("Current combined filter:", each_combined_filter)
+                request = await cl.create_search(name='planet_client_demo', search_filter=each_combined_filter, item_types=self.item_types)
+                items = cl.run_search(search_id=request['id'], limit=self.limit)
                 item_list = [i async for i in items]
-            if len(item_list)==0:
-                print("No images found for the days given that satisfy the filters")
-                sys.exit(1)
-            item_list,search_df=self.filter_search_result(item_list)
-            return item_list,search_df
+                if item_list:
+                    _, search_df = self.filter_search_result(item_list)
+                    item_list_total.extend(item_list)
+                    search_df_total = pd.concat([search_df_total, search_df], ignore_index=True)
+                else:
+                    print("No images found for the days given that satisfy the filters")
+
+        if len(item_list_total) == 0:
+            print("No images found for the days given that satisfy the filters")
+            sys.exit(1)
+
+        csv_file_path = os.path.join(self.directory, "filter_df.csv")
+        search_df_total.to_csv(csv_file_path, index=False)
+        print(f"DataFrame saved to {csv_file_path}")
+
+        return item_list_total, search_df_total
     
     async def activate_assets(self,item_id,item_type,asset_type_id):
 
