@@ -7,6 +7,7 @@ import pandas as pd
 import json
 from datetime import timedelta
 import sys
+from Utils.database_utils import check_area_coverage, add_new_image
 
 class PlanetData():
     
@@ -177,6 +178,28 @@ class PlanetData():
                 await asyncio.sleep(2**attempt)  # exponential backoff
         raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
     
+    async def download_asset_with_database_check(self,item_id=None, asset_type_id=None, date=None, item_type='PSScene', retries=3):
+        attempt = 0
+        asset_path = check_area_coverage(polygon = self.geom, date = date, )
+        if asset_path is not None:
+            return asset_path
+        else:
+            while attempt < retries:
+                try:
+                    await self.activate_assets(item_id, item_type, asset_type_id)
+                    async with Session() as sess:
+                        cl = sess.client('data')
+                        asset_desc = await cl.get_asset(item_type_id=item_type, item_id=item_id, asset_type_id=asset_type_id)
+                        asset_path = await cl.download_asset(asset=asset_desc, directory=self.directory, overwrite=True)
+                        print(f"Downloaded asset {item_id} to {asset_path}")
+                        add_new_image(tile_id = item_id, acquisition_date = date, geojson_polygon = self.geom, image_path = asset_path)
+                        return asset_path
+                except Exception as e:
+                    print(f"Failed to download asset {item_id}, attempt {attempt+1} of {retries}: {str(e)}")
+                    attempt += 1
+                    await asyncio.sleep(2**attempt)  # exponential backoff
+            raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
+    
     async def download_multiple_assets(self, geom=None, asset_type_id=None, item_type='PSScene', id_list=None):
         self.geom = geom
         item_list, search_df = await self.search()
@@ -185,9 +208,9 @@ class PlanetData():
         print(f"DataFrame saved to {csv_file_path}")
         
         if id_list is None:
-            download_tasks = [self.download_asset(item['id'], asset_type_id) for item in item_list]
+            download_tasks = [self.download_asset_with_database_check(item['id'], asset_type_id, item['properties']['date']) for item in item_list]
         else:
-            download_tasks = [self.download_asset(idx, asset_type_id) for idx in id_list]
+            download_tasks = [self.download_asset_with_database_check(idx, asset_type_id) for idx in id_list]
             item_list = id_list
 
         results = await asyncio.gather(*download_tasks, return_exceptions=True)  # retry logic inside download_asset
@@ -213,3 +236,4 @@ def read_geojson(file_path):
             return geometries[0]  # Return a single geometry dictionary if only one geometry
         else:
             return geometries
+        
