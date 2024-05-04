@@ -1,7 +1,7 @@
 import psycopg2
 from geojson import Polygon
 
-def check_area_coverage(geojson_polygon, date, connection_params) :
+def check_area_coverage(geojson_polygon, date, connection_params):
     # Convert GeoJSON to WKT (Well-Known Text)
     geometry_wkt = str(Polygon(geojson_polygon['coordinates']))
     
@@ -9,20 +9,15 @@ def check_area_coverage(geojson_polygon, date, connection_params) :
     conn = psycopg2.connect(**connection_params)
     cur = conn.cursor()
     
-    # SQL query to check for existence of the data
+    # SQL query to check for existence of the data and get the image path
     cur.execute(
-        "SELECT EXISTS (SELECT 1 FROM satellite_images WHERE geometry && ST_GeomFromText(%s, 4326) AND acquisition_date = %s)",
+        "SELECT image_path FROM satellite_images WHERE geometry && ST_GeomFromText(%s, 4326) AND acquisition_date = %s",
         (geometry_wkt, date)
     )
-    
-    # Fetch the result
-    exists = cur.fetchone()[0]
-    
-    # Close the database connection
+    result = cur.fetchone()
     cur.close()
     conn.close()
-    
-    return exists
+    return result[0] if result else None
 
 def add_new_image(tile_id, acquisition_date, geojson_polygon, image_path, connection_params):
     # Convert GeoJSON to WKT (Well-Known Text)
