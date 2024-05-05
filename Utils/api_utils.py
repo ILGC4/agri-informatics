@@ -21,7 +21,7 @@ connection_params = {
 
 class PlanetData():
     
-    def __init__(self,credentials,clear_percent_filter_value, date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output", frequency = None):
+    def __init__(self,credentials,clear_percent_filter_value, date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output", interval = None):
 
         self.clear_percent_filter_value=clear_percent_filter_value
         self.cloud_cover_filter_value=cloud_cover_filter_value
@@ -30,7 +30,7 @@ class PlanetData():
         self.directory=directory
         self.item_types=item_types
         self.limit=limit
-        self.frequency=frequency
+        self.interval=interval
         self.client=self.__get_client__()
 
     def __get_combined_filter__(self):
@@ -51,7 +51,7 @@ class PlanetData():
         base_filters.append(quality_filter)
 
         # Use generate_date_ranges to get datetime objects for filters
-        date_ranges = self.generate_date_ranges(self.date_range['gte'], self.date_range['lte'], self.frequency)
+        date_ranges = self.generate_date_ranges(self.date_range['gte'], self.date_range['lte'], self.interval)
 
         combined_filters = []
         for date_range in date_ranges:
@@ -60,7 +60,7 @@ class PlanetData():
 
         return combined_filters
     
-    def generate_date_ranges(self, start_date, end_date, frequency):
+    def generate_date_ranges(self, start_date, end_date, interval):
         date_ranges = []
         current_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -76,7 +76,7 @@ class PlanetData():
                 'lte': next_date      # Directly use datetime object
             })
             
-            current_date += timedelta(days=frequency)
+            current_date += timedelta(days=interval)
             if current_date > end_date:
                 break
         print("Date Ranges", date_ranges)
@@ -118,10 +118,6 @@ class PlanetData():
         if len(item_list_total) == 0:
             print("No images found for the days given that satisfy the filters")
             sys.exit(1)
-
-        csv_file_path = os.path.join(self.directory, "filter_df.csv")
-        search_df_total.to_csv(csv_file_path, index=False)
-        print(f"DataFrame saved to {csv_file_path}")
 
         return item_list_total, search_df_total
     
@@ -177,7 +173,7 @@ class PlanetData():
                 await asyncio.sleep(2**attempt)  # exponential backoff
         raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
     
-    async def download_asset_w_dbcheck(self,item_id=None, asset_type_id=None, date=None, item_type='PSScene', retries=3):
+    async def download_asset_w_dbcheck(self,item_id=None, asset_type_id=None, date=None, filter_df_name = None, item_type='PSScene', retries=3):
         attempt = 0
         asset_path = check_area_coverage(polygon = self.geom, date = date, connection_params=connection_params )
         if asset_path is not None:
@@ -201,7 +197,9 @@ class PlanetData():
                             acquisition_date = date, 
                             coordinates=coordinates, 
                             image_path = asset_path, 
-                            connection_params=connection_params)                     
+                            filter_df_name = filter_df_name, 
+                            connection_params=connection_params)                 
+                        
                         return asset_path
                 except Exception as e:
                     print(f"Failed to download asset {item_id}, attempt {attempt+1} of {retries}: {str(e)}")
@@ -212,14 +210,17 @@ class PlanetData():
     async def download_multiple_assets(self, geom=None, asset_type_id=None, item_type='PSScene', id_list=None):
         self.geom = geom
         print("self geom",self.geom)
-        name = extract_last_three_digits_string(self.geom)
-        print("name:", name)
+        filter_df_name = extract_last_three_digits_string(self.geom)
         item_list, search_df = await self.search()
-        csv_file_path = os.path.join(self.directory, f"{name}_filter_df.csv")
+        csv_file_path = os.path.join(self.directory, f"{filter_df_name}_filter_df.csv")
         search_df.to_csv(csv_file_path, index=False)
         print(f"DataFrame saved to {csv_file_path}")
         
-        download_tasks = [self.download_asset_w_dbcheck(item['id'], asset_type_id, item['properties']['date']) for item in item_list]
+        download_tasks = [self.download_asset_w_dbcheck(
+            item['id'], 
+            asset_type_id, 
+            item['properties']['date'], 
+            filter_df_name) for item in item_list]
 
         results = await asyncio.gather(*download_tasks, return_exceptions=True)  # retry logic inside download_asset
         return results, item_list, search_df
