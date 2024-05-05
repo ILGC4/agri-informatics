@@ -21,7 +21,7 @@ connection_params = {
 
 class PlanetData():
     
-    def __init__(self,credentials,clear_percent_filter_value, date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output", frequency = None):
+    def __init__(self,credentials,clear_percent_filter_value, date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output", interval = None):
 
         self.clear_percent_filter_value=clear_percent_filter_value
         self.cloud_cover_filter_value=cloud_cover_filter_value
@@ -30,7 +30,7 @@ class PlanetData():
         self.directory=directory
         self.item_types=item_types
         self.limit=limit
-        self.frequency=frequency
+        self.interval=interval
         self.client=self.__get_client__()
 
     def __get_combined_filter__(self):
@@ -51,7 +51,7 @@ class PlanetData():
         base_filters.append(quality_filter)
 
         # Use generate_date_ranges to get datetime objects for filters
-        date_ranges = self.generate_date_ranges(self.date_range['gte'], self.date_range['lte'], self.frequency)
+        date_ranges = self.generate_date_ranges(self.date_range['gte'], self.date_range['lte'], self.interval)
 
         combined_filters = []
         for date_range in date_ranges:
@@ -60,7 +60,7 @@ class PlanetData():
 
         return combined_filters
     
-    def generate_date_ranges(self, start_date, end_date, frequency):
+    def generate_date_ranges(self, start_date, end_date, interval):
         date_ranges = []
         current_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -76,7 +76,7 @@ class PlanetData():
                 'lte': next_date      # Directly use datetime object
             })
             
-            current_date += timedelta(days=frequency)
+            current_date += timedelta(days=interval)
             if current_date > end_date:
                 break
         print("Date Ranges", date_ranges)

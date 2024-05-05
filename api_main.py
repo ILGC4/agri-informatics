@@ -56,7 +56,7 @@ async def main():
         item_types=['PSScene'],  # satellite images
         limit=10,  # limit the number of images to retrieve
         directory="./Images/",  # directory to save downloaded stuff
-        frequency=5
+        interval=5
     )
     # Iterate over each geometry
     for geom_idx, geom in enumerate(geom_list):
