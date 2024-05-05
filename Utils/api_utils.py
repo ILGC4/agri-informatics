@@ -98,8 +98,9 @@ class PlanetData():
                 items = cl.run_search(search_id=request['id'], limit=self.limit)
                 item_list = [i async for i in items]
                 if item_list:
-                    _, search_df = self.filter_search_result(item_list)
-                    item_list_total.extend(item_list)
+                    # changed item list total from _ to ensure 1 image per day
+                    item_list_total, search_df = self.filter_search_result(item_list)
+                    # item_list_total.extend(item_list)
                     search_df_total = pd.concat([search_df_total, search_df], ignore_index=True)
                 else:
                     print("No images found for the days given that satisfy the filters")
@@ -187,11 +188,14 @@ class PlanetData():
                     attempt += 1
                     await asyncio.sleep(2**attempt)  # exponential backoff
             raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
-    
+
     async def download_multiple_assets(self, geom=None, asset_type_id=None, item_type='PSScene', id_list=None):
         self.geom = geom
+        print("self geom",self.geom)
+        name = extract_last_three_digits_string(self.geom)
+        print("name:", name)
         item_list, search_df = await self.search()
-        csv_file_path = os.path.join(self.directory, "filter_df.csv")
+        csv_file_path = os.path.join(self.directory, f"{name}_filter_df.csv")
         search_df.to_csv(csv_file_path, index=False)
         print(f"DataFrame saved to {csv_file_path}")
         
@@ -225,3 +229,16 @@ def read_geojson(file_path):
         else:
             return geometries
         
+def extract_last_three_digits_string(geom):
+    coordinates = geom['coordinates']
+    last_three_digits_list = []
+    for coord_set in coordinates:
+        for coordinate in coord_set:
+            longitude = coordinate[0]  # Long is the first element in each coordinate set
+            longitude_str = str(longitude)
+            longitude_parts = longitude_str.split('.')
+            last_three_digits = longitude_parts[1][-3:]
+            last_three_digits_list.append(last_three_digits)
+    last_three_digits_string = '_'.join(last_three_digits_list)
+    
+    return last_three_digits_string

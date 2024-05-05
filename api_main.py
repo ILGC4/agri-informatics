@@ -77,13 +77,13 @@ async def main():
     geom_list = read_geojson("Data/output.geojson")  # Read the GeoJSON file
     if isinstance(geom_list, dict):
         geom_list = [geom_list]
-    print("geom:", geom_list)
+    # print("geom:", geom_list)
         
     # create an instance of the PlanetData class
     planet_data = PlanetData(
         credentials=credentials,
         clear_percent_filter_value=(50, 100),  # clear images between 50% to 100%
-        date_range={'gte': '2024-04-4', 'lte': '2024-04-5'}, 
+        date_range={'gte': '2024-04-4', 'lte': '2024-04-10'}, 
         cloud_cover_filter_value=(0, 80),  # max cloud cover of 80%
         item_types=['PSScene'],  # satellite images
         limit=10,  # limit the number of images to retrieve
