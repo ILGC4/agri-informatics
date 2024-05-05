@@ -24,7 +24,7 @@ def check_area_coverage(polygon, date, connection_params):
     conn.close()
     return result[0] if result else None
 
-def add_new_image(tile_id, acquisition_date, coordinates, image_path, connection_params):
+def add_new_image(tile_id, acquisition_date, coordinates, image_path, filter_df_name, connection_params):
     # Convert date string from 'YYYYMMDD' to a date object
     acquisition_date = '-'.join([acquisition_date[:4], acquisition_date[4:6], acquisition_date[6:]])
 
@@ -48,8 +48,8 @@ def add_new_image(tile_id, acquisition_date, coordinates, image_path, connection
     
     # SQL command to insert new data
     cur.execute(
-        "INSERT INTO satellite_images (tile_id, acquisition_date, geometry, image_path) VALUES (%s, %s, ST_GeomFromText(%s, 4326), %s)", (tile_id, acquisition_date, wkt_geometry, image_path)
-    )
+        "INSERT INTO satellite_images (tile_id, acquisition_date, geometry, image_path, filter_df) VALUES (%s, %s, ST_GeomFromText(%s, 4326), %s, %s)",
+        (tile_id, acquisition_date, wkt_geometry, image_path, filter_df_name))
     
     # Commit changes
     conn.commit()
