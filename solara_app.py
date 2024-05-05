@@ -22,9 +22,10 @@ from shapely.geometry import shape, Point, mapping
 
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
-display_images = solara.reactive(False)
-display_grid = solara.reactive(False) 
+display_info = solara.reactive(False) 
+show_info=solara.reactive(False)
 images_figures = solara.reactive([])
+
 
 zoom = solara.reactive(5)
 center = solara.reactive((22.0, 78.0))
@@ -33,6 +34,7 @@ show_message = solara.reactive(False)
 selected_polygon_id = solara.reactive(None)
 selection_message = solara.reactive("") 
 click_message = solara.reactive("")
+selected_date = solara.reactive("Select a date")
 
 locations = {
         "Default": [22.0, 78.0],
@@ -62,10 +64,26 @@ async def display_message_for_seconds(msg, seconds):
 #     if show_message.get():
 #         return solara.Text(message.get(), style={"color": "green", "fontWeight": "bold"})
 #     return None
+    
+@solara.component
+def DateDropdown():
+    if display_info.get():
+        data_by_date, dates_list=get_data_from_csv('./Images/filter_df.csv')
+        def on_data_change(new_date):
+            print(f"Selected Date: {new_date}")
+            selected_date.set(new_date)
+        return solara.Select(
+            label="Choose a date",
+            values=dates_list,
+            value=selected_date,
+            on_value=on_data_change,
+            dense=True,
+            style={"width": "100%", "maxWidth": "400px"}
+        )
 
 @solara.component
 def SelectionConfirmationMessage():
-    if selected_polygon_id.get() is not None:
+    if selected_polygon_id is not None:
         return solara.Text(selection_message.get(), style={"color": "green", "fontWeight": "bold"})
     return None
 
@@ -84,14 +102,19 @@ def delete_geojson_on_startup(file_path):
         print(f"Failed to delete {file_path}: {e}")
 
 def get_data_from_csv(file_path):
-    fields=['cloud_cover', 'pixel_resolution', 'clear_percent', 'satellite_id', 'date', 'gsd']
-    extracted=[]
+    fields = ['cloud_cover', 'pixel_resolution', 'clear_percent', 'satellite_id', 'gsd', 'heavy_haze_percent']
+    data_by_date = {}
+    dates_list = []
     with open(file_path, newline='') as file:
-        reader=csv.DictReader(file)
+        reader = csv.DictReader(file)
         for row in reader:
-            extracted.append([row[field] for field in fields])
-    print(f"Got data points from filter_df file: {extracted}")
-    return extracted
+            date_str = row['date']
+            date_str = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+            if date_str not in data_by_date:
+                data_by_date[date_str] = []
+                dates_list.append(date_str)
+            data_by_date[date_str].append({field: row[field] for field in fields})
+    return data_by_date, dates_list
 
 # def handle_upload(change):
 #     if change.new:
@@ -137,7 +160,7 @@ class Map(leafmap.Map):
             self.handle_map_click(**kwargs)
 
     def handle_map_click(self, **kwargs):
-        global global_geojson
+        global global_geojson, selected_polygon_id
         coordinates = kwargs.get('coordinates')
         if coordinates:
             # Create a point with longitude and latitude (ensure the correct order based on your map's configuration)
@@ -148,10 +171,12 @@ class Map(leafmap.Map):
                 polygon=shape(feature['geometry'])
                 if polygon.contains(clicked_point):
                     asyncio.create_task(display_message_for_seconds("Selected a polygon, please wait for results", 5))
+                    selected_polygon_id=feature['id']
                     found=True
                     break
-            if not found:
+            if not found:  
                 asyncio.create_task(display_message_for_seconds("Please click within a polygon", 5)) 
+                selected_polygon_id=None
 
 
     
@@ -185,6 +210,7 @@ class Map(leafmap.Map):
             # Assign a unique identifier to the geo_json
             geo_json['id'] = len(global_geojson) + 1
             global_geojson.append(geo_json) 
+            display_info.set(True)
             print("Shape drawn and stored: ", geo_json)
         elif action == "deleted": 
             # Remove the feature with the matching ID
@@ -192,64 +218,64 @@ class Map(leafmap.Map):
             global_geojson=[x for x in global_geojson if x['geometry']['coordinates'] != delete]
             print("Shape deleted: ", geo_json)
 
-    def extract_coords(self, geometry):
-        coords = []
-        geom_type = geometry['type']
-        if geom_type == 'Polygon':
-            for ring in geometry['coordinates']:
-                coords.extend(ring)
-        return coords 
+    # def extract_coords(self, geometry):
+    #     coords = []
+    #     geom_type = geometry['type']
+    #     if geom_type == 'Polygon':
+    #         for ring in geometry['coordinates']:
+    #             coords.extend(ring)
+    #     return coords 
 
-    def get_bounds_from_geojson(self, geo_json):
-        coords = []
-        for feature in geo_json['features']:
-            geom = feature['geometry']
-            extracted_coords = self.extract_coords(geom)
-            coords.extend(extracted_coords)
-        if not coords:
-            print("No coordinates extracted, cannot compute bounds.")
-            return None
-        min_lat = min(lat for _, lat in coords) 
-        max_lat = max(lat for _, lat in coords)
-        min_lon = min(lon for lon, _ in coords)
-        max_lon = max(lon for lon, _ in coords)
-        bounds = [(min_lat, min_lon), (max_lat, max_lon)]
-        print("Computed bounds:", bounds)
-        return bounds
+    # def get_bounds_from_geojson(self, geo_json):
+    #     coords = []
+    #     for feature in geo_json['features']:
+    #         geom = feature['geometry']
+    #         extracted_coords = self.extract_coords(geom)
+    #         coords.extend(extracted_coords)
+    #     if not coords:
+    #         print("No coordinates extracted, cannot compute bounds.")
+    #         return None
+    #     min_lat = min(lat for _, lat in coords) 
+    #     max_lat = max(lat for _, lat in coords)
+    #     min_lon = min(lon for lon, _ in coords)
+    #     max_lon = max(lon for lon, _ in coords)
+    #     bounds = [(min_lat, min_lon), (max_lat, max_lon)]
+    #     print("Computed bounds:", bounds)
+    #     return bounds
     
-    def calculate_zoom_level(self, bounds):
-        min_lat, min_lon = bounds[0]
-        max_lat, max_lon = bounds[1]
-        lat_range = max_lat - min_lat
-        lon_range = max_lon - min_lon
-        max_range = max(lat_range, lon_range)
-        if max_range < 0.01:
-            return 15  
-        elif max_range < 0.1:
-            return 13
-        elif max_range < 1:
-            return 10
-        else:
-            return 8
+    # def calculate_zoom_level(self, bounds):
+    #     min_lat, min_lon = bounds[0]
+    #     max_lat, max_lon = bounds[1]
+    #     lat_range = max_lat - min_lat
+    #     lon_range = max_lon - min_lon
+    #     max_range = max(lat_range, lon_range)
+    #     if max_range < 0.01:
+    #         return 15  
+    #     elif max_range < 0.1:
+    #         return 13
+    #     elif max_range < 1:
+    #         return 10
+    #     else:
+    #         return 8
     
-    def zoom_to_geojson(self, geo_json):
-        global map_instance
-        bounds = self.get_bounds_from_geojson(geo_json)
-        zoom_level = self.calculate_zoom_level(bounds)
-        if bounds:
-            try:
-                min_lat, min_lon = bounds[0]
-                max_lat, max_lon = bounds[1]
-                center_lat = (min_lat + max_lat) / 2
-                center_lon = (min_lon + max_lon) / 2
-                center_coords=[center_lat, center_lon]
-                center.set(center_coords) 
-                zoom.set(zoom_level)
-                print(f"Manually set center to: {center_coords}, zoom level to 20")
-            except Exception as e:
-                print(f"Failed manual zoom: {str(e)}")
-        else:
-            print("No valid bounds found to apply zoom.")
+    # def zoom_to_geojson(self, geo_json):
+    #     global map_instance
+    #     bounds = self.get_bounds_from_geojson(geo_json)
+    #     zoom_level = self.calculate_zoom_level(bounds)
+    #     if bounds:
+    #         try:
+    #             min_lat, min_lon = bounds[0]
+    #             max_lat, max_lon = bounds[1]
+    #             center_lat = (min_lat + max_lat) / 2
+    #             center_lon = (min_lon + max_lon) / 2
+    #             center_coords=[center_lat, center_lon]
+    #             center.set(center_coords) 
+    #             zoom.set(zoom_level)
+    #             print(f"Manually set center to: {center_coords}, zoom level to 20")
+    #         except Exception as e:
+    #             print(f"Failed manual zoom: {str(e)}")
+    #     else:
+    #         print("No valid bounds found to apply zoom.")
 
     def export(self, file_path):
         global global_geojson
@@ -296,35 +322,36 @@ def test_get_recent_images(directory_path):
  
  
 def get_and_display_recent_images():
-        directory_path = './plots/'  # Specify the directory path
-        print('Fetching recent images...')
-        recent_images = test_get_recent_images(directory_path)
-        # plot images using plt
-        figs=[]
-        if recent_images:
-            for img_path in recent_images:
-                try:
-                    img = plt.imread(img_path)  
-                    fig, ax = plt.subplots(figsize=(10, 8), dpi=100) 
-                    ax.imshow(img, interpolation='bicubic')
-                    ax.axis('off')  # Hide the axes
-                    figs.append(fig)
-                    print(f"Loaded image {img_path}")
-                except Exception as e:
-                    print(f"Failed to process image {img_path}: {str(e)}")
-            if figs:
-                images_figures.set(figs)
-                display_images.set(True)
-                display_grid.set(True)
-                print("Images are ready to be displayed.")
+        if display_info.get():
+            directory_path = './plots/'  # Specify the directory path
+            print('Fetching recent images...')
+            recent_images = test_get_recent_images(directory_path)
+            # plot images using plt
+            figs=[]
+            if recent_images:
+                for img_path in recent_images:
+                    try:
+                        img = plt.imread(img_path)  
+                        fig, ax = plt.subplots(figsize=(10, 8), dpi=100) 
+                        ax.imshow(img, interpolation='bicubic')
+                        ax.axis('off')  # Hide the axes
+                        figs.append(fig)
+                        print(f"Loaded image {img_path}")
+                    except Exception as e:
+                        print(f"Failed to process image {img_path}: {str(e)}")
+                if figs:
+                    images_figures.set(figs)
+                    display_info.set(True)
+                    print("Images are ready to be displayed.")
+                else:
+                    print("No images were loaded.")
             else:
-                print("No images were loaded.")
+                print("No files in directory.")
         else:
-            print("No files in directory.")
+            print("Nothing to process.")
 
 def remove_images():
-    display_images.set(False)
-    display_grid.set(False) 
+    display_info.set(False) 
     images_figures.set([])
     print("Images removed.")
 
@@ -332,7 +359,7 @@ def remove_images():
 
 @solara.component
 def DisplayImages():
-    if display_images.get():
+    if display_info.get():
         print("Displaying images...")
         return solara.VBox([solara.FigureMatplotlib(fig) for fig in images_figures.get()])
     print("No images to display")
@@ -340,7 +367,7 @@ def DisplayImages():
 
 @solara.component 
 def TextCard(color, text, title=None):
-    if display_grid.get():
+    if display_info.get() is True:
         style = {
             "backgroundColor": color,
             "color": "white",
@@ -359,35 +386,35 @@ def TextCard(color, text, title=None):
 
 @solara.component
 def DraggableGrid():
-    if display_grid.get():
-        extracted_data=get_data_from_csv('./Images/filter_df.csv')
+    if display_info.get():
+        data_by_date, _=get_data_from_csv('./Images/filter_df.csv')
+        date_data = data_by_date.get(selected_date.get(), [])
+        if not date_data:
+            return solara.Text("Please select a date.", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
+        
         grid_layout_initial = [
-            {"h": 10, "i": "0", "moved": False, "w": 10, "x": 0, "y": 0},
-            {"h": 3, "i": "1", "moved": False, "w": 3, "x": 3, "y": 0},
-            {"h": 3, "i": "2", "moved": False, "w": 3, "x": 6, "y": 0},
-            {"h": 3, "i": "3", "moved": False, "w": 3, "x": 0, "y": 3},
-            {"h": 3, "i": "4", "moved": False, "w": 3, "x": 3, "y": 3},
-            {"h": 3, "i": "5", "moved": False, "w": 3, "x": 6, "y": 3},
+            {"h": 3, "i": str(i), "moved": False, "w": 3, "x": i % 3 * 3, "y": i // 3 * 3} for i in range(6)
         ]
-        colors = "blue blue blue blue blue blue".split()
+        colors = ["blue"]*6
+        # fields = ['Cloud Cover', 'Pixel Resolution', 'Clear Percent', 'Satellite ID', 'GSD', 'Heavy Haze Percent']
         dummy_texts = [
-            f"Cloud Cover: {extracted_data[0][0]}",
-            f"Pixel Resolution: {extracted_data[0][1]}",
-            f"Clear Percent: {extracted_data[0][2]}",
-            f"Satellite ID: {extracted_data[0][3]}",
-            f"Date: {extracted_data[0][4]}",
-            f"GSD: {extracted_data[0][5]}"
+            f"Cloud Cover: {date_data[0]['cloud_cover']}",
+            f"Pixel Resolution: {date_data[0]['pixel_resolution']}",
+            f"Clear Percent: {date_data[0]['clear_percent']}",
+            f"Satellite ID: {date_data[0]['satellite_id']}",
+            f"GSD: {date_data[0]['gsd']}",
+            f"Heavy Haze Percent: {date_data[0]['heavy_haze_percent']}"
         ]
+ 
+        grid_layout, set_grid_layout = solara.use_state(grid_layout_initial) 
 
-        grid_layout, set_grid_layout = solara.use_state(grid_layout_initial)
-
-        items = [TextCard(title=f"Item {i}", color=colors[i], text=dummy_texts[i]) for i in range(len(grid_layout))]
+        items = [TextCard(title=f"Item {i}", color=colors[i], text=dummy_texts[i]) for i in range(len(dummy_texts))]
         
         return solara.GridDraggable(
             items=items,
             grid_layout=grid_layout,
             resizable=True,
-            draggable=True,
+            draggable=True, 
             on_grid_layout=set_grid_layout
         )
 
@@ -489,17 +516,17 @@ def Page():
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#007BFF", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
             solara.Button(
-                label="Export GeoJSON",
+                label="Collect Info",
                 on_click=export_geojson,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
             solara.Button( 
-                label="Display Plots",
+                label="Display Info",
                 on_click=get_and_display_recent_images,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             ) 
             solara.Button(
-                label="Remove Plots",
+                label="Remove Info",
                 on_click=remove_images,
                 style={"width": "200px", "marginTop": "5px", "fontSize": "16px", "backgroundColor": "#28a745", "color": "white", "border": "none", "borderRadius": "5px", "padding": "10px 0"}
             )
@@ -507,14 +534,15 @@ def Page():
         zoom=zoom.value,
         on_zoom=zoom.set,
         center=center.value,
-        on_center=center.set,
+        on_center=center.set, 
         scroll_wheel_zoom=True,
         toolbar_ctrl=False,
         data_ctrl=False,
     )
-    if display_images.get():
+        
+    if selected_polygon_id is not None:
         DisplayImages()
-    if display_grid.get():
+        DateDropdown()
         DraggableGrid()
     solara.Text(f"Zoom: {zoom.value}")
     solara.Text(f"Center: {center.value}")  
