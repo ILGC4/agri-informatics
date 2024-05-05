@@ -11,6 +11,14 @@ from datetime import timedelta
 import sys
 from Utils.database_utils import check_area_coverage, add_new_image
 
+connection_params = {
+    'dbname': 'smurf',
+    'user': 'postgres',
+    'password': 'postgres',  # Replace 'your_password' with the actual password
+    'host': 'localhost',
+    'port': '5432'
+}
+
 class PlanetData():
     
     def __init__(self,credentials,clear_percent_filter_value, date_range=None,cloud_cover_filter_value=0.1,item_types=None,limit=100,directory="output", frequency = None):
@@ -169,28 +177,38 @@ class PlanetData():
                 await asyncio.sleep(2**attempt)  # exponential backoff
         raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
     
-    async def download_asset_with_database_check(self,item_id=None, asset_type_id=None, date=None, item_type='PSScene', retries=3):
+    async def download_asset_w_dbcheck(self,item_id=None, asset_type_id=None, date=None, item_type='PSScene', retries=3):
         attempt = 0
-        asset_path = check_area_coverage(polygon = self.geom, date = date, )
+        asset_path = check_area_coverage(polygon = self.geom, date = date, connection_params=connection_params )
         if asset_path is not None:
+            print("Getting file form Database")
             return asset_path
         else:
             while attempt < retries:
                 try:
                     await self.activate_assets(item_id, item_type, asset_type_id)
                     async with Session() as sess:
+
+                        print("getting file from planet, attempt =", attempt)
                         cl = sess.client('data')
                         asset_desc = await cl.get_asset(item_type_id=item_type, item_id=item_id, asset_type_id=asset_type_id)
                         asset_path = await cl.download_asset(asset=asset_desc, directory=self.directory, overwrite=True)
                         print(f"Downloaded asset {item_id} to {asset_path}")
-                        add_new_image(tile_id = item_id, acquisition_date = date, geojson_polygon = self.geom, image_path = asset_path)
+                        coordinates = extract_corner_coordinates(asset_path)
+                        
+                        add_new_image(
+                            tile_id = item_id, 
+                            acquisition_date = date, 
+                            coordinates=coordinates, 
+                            image_path = asset_path, 
+                            connection_params=connection_params)                     
                         return asset_path
                 except Exception as e:
                     print(f"Failed to download asset {item_id}, attempt {attempt+1} of {retries}: {str(e)}")
                     attempt += 1
                     await asyncio.sleep(2**attempt)  # exponential backoff
             raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
-
+    
     async def download_multiple_assets(self, geom=None, asset_type_id=None, item_type='PSScene', id_list=None):
         self.geom = geom
         print("self geom",self.geom)
@@ -201,11 +219,7 @@ class PlanetData():
         search_df.to_csv(csv_file_path, index=False)
         print(f"DataFrame saved to {csv_file_path}")
         
-        if id_list is None:
-            download_tasks = [self.download_asset_with_database_check(item['id'], asset_type_id, item['properties']['date']) for item in item_list]
-        else:
-            download_tasks = [self.download_asset_with_database_check(idx, asset_type_id) for idx in id_list]
-            item_list = id_list
+        download_tasks = [self.download_asset_w_dbcheck(item['id'], asset_type_id, item['properties']['date']) for item in item_list]
 
         results = await asyncio.gather(*download_tasks, return_exceptions=True)  # retry logic inside download_asset
         return results, item_list, search_df
@@ -276,3 +290,4 @@ def extract_corner_coordinates(tif_file):
             "bottom_left": corner_df.geometry.iloc[2],
             "bottom_right": corner_df.geometry.iloc[3]
         }
+    

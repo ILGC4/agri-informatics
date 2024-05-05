@@ -41,7 +41,7 @@ def plot_rgb_and_ndvi(rgb_img, ndvi, save_path=None):
 
 # function to handle API calls, data processing, and visualization
 async def main():
-    credentials = {'API_KEY': 'PLAK6d9e3e666f9b461c92468569a4b270c7'}  # jiya's
+    credentials = {'API_KEY': 'PLAKdc2fbb92b95b4abea465658318f59e1a'}  # jiya's
     geom_list = read_geojson("Data/output.geojson")  # Read the GeoJSON file
     if isinstance(geom_list, dict):
         geom_list = [geom_list]
@@ -66,12 +66,12 @@ async def main():
         results, item_list, search_df = await planet_data.download_multiple_assets(geom=geom, asset_type_id='ortho_analytic_8b_sr')
         tif_files = [result for result in results if pathlib.Path(result).suffix == '.tif']
         print("Results:", results)
-        print("TIF files:", tif_files)
+        print("TIF files:", type(tif_files[0]))
         
         # Iterate over each TIFF file for the current geometry
         for idx, tif_file in enumerate(tif_files):
-            filename = tif_file.name  # Extract the filename from the PosixPath object
-            date_str = filename[:8]    # Extract the first eight characters of the filename as the date
+            filename = str(tif_file)  # Extract the filename from the PosixPath object
+            date_str = filename[7:15]    # Extract the first eight characters of the filename as the date
             print("Date:", date_str)
             
             with rasterio.open(tif_file) as src:
