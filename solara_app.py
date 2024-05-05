@@ -390,7 +390,7 @@ def Page():
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
         PolygonClickMessage()
-        FileDrop()
+        FileDrop() # type: ignore
         SelectionConfirmationMessage()  
         # Rest of your existing UI components
 
