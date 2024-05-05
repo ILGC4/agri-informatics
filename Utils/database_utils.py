@@ -12,8 +12,12 @@ def check_area_coverage(polygon, date, connection_params):
     cur = conn.cursor()
     
     # SQL query to check for existence of the data and get the image path
-    cur.execute("SELECT image_path FROM satellite_images WHERE ST_Intersects(geometry, ST_GeomFromText(%s, 4326)) AND acquisition_date = %s",(wkt, date))
-    result = cur.fetchone()
+    try:
+        cur.execute("SELECT image_path FROM satellite_images WHERE ST_Intersects(geometry, ST_GeomFromText(%s, 4326)) AND acquisition_date = %s",(wkt, date))
+        result = cur.fetchone()
+    except Exception as e:
+        print("Error:", e)
+        result = [None]
 
     print("\nresult from query:", result)
     cur.close()
