@@ -10,8 +10,8 @@ import asyncio
 from pathlib import Path
 # import time
 import csv
-# from api_main import main
-# from solara.lab import task
+from api_main import main
+from solara.lab import task
 # import io
 # from PIL import Image as PILImage
 import matplotlib.pyplot as plt
