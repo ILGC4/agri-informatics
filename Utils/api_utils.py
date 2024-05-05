@@ -181,30 +181,30 @@ class PlanetData():
             return asset_path
         else:
             while attempt < retries:
-                try:
-                    await self.activate_assets(item_id, item_type, asset_type_id)
-                    async with Session() as sess:
+                    try:
+                        await self.activate_assets(item_id, item_type, asset_type_id)
+                        async with Session() as sess:
 
-                        print("getting file from planet, attempt =", attempt)
-                        cl = sess.client('data')
-                        asset_desc = await cl.get_asset(item_type_id=item_type, item_id=item_id, asset_type_id=asset_type_id)
-                        asset_path = await cl.download_asset(asset=asset_desc, directory=self.directory, overwrite=True)
-                        print(f"Downloaded asset {item_id} to {asset_path}")
-                        coordinates = extract_corner_coordinates(asset_path)
-                        
-                        add_new_image(
-                            tile_id = item_id, 
-                            acquisition_date = date, 
-                            coordinates=coordinates, 
-                            image_path = asset_path, 
-                            filter_df_name = filter_df_name, 
-                            connection_params=connection_params)                 
-                        
-                        return asset_path
-                except Exception as e:
-                    print(f"Failed to download asset {item_id}, attempt {attempt+1} of {retries}: {str(e)}")
-                    attempt += 1
-                    await asyncio.sleep(2**attempt)  # exponential backoff
+                            print("getting file from planet, attempt =", attempt)
+                            cl = sess.client('data')
+                            asset_desc = await cl.get_asset(item_type_id=item_type, item_id=item_id, asset_type_id=asset_type_id)
+                            asset_path = await cl.download_asset(asset=asset_desc, directory=self.directory, overwrite=True)
+                            print(f"Downloaded asset {item_id} to {asset_path}")
+                            coordinates = extract_corner_coordinates(asset_path)
+                            
+                            add_new_image(
+                                tile_id = item_id, 
+                                acquisition_date = date, 
+                                coordinates=coordinates, 
+                                image_path = asset_path, 
+                                filter_df_name = filter_df_name, 
+                                connection_params=connection_params)                 
+                            
+                            return asset_path
+                    except Exception as e:
+                        print(f"Failed to download asset {item_id}, attempt {attempt+1} of {retries}: {str(e)}")
+                        attempt += 1
+                        await asyncio.sleep(2**attempt)  # exponential backoff
             raise Exception(f"Failed to download asset {item_id} after {retries} attempts")
     
     async def download_multiple_assets(self, geom=None, asset_type_id=None, item_type='PSScene', id_list=None):
