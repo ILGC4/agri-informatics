@@ -258,13 +258,13 @@ class Map(leafmap.Map):
             with open(file_path, "w") as f:
                 json.dump(global_geojson, f)
             print("GeoJSON data exported to: ", file_path)
-            # fetch_api()
+            fetch_api()
         else:
             print("No data to export")
 
-# @task
-# async def fetch_api():
-#     await main()
+@task
+async def fetch_api():
+    await main()
 
 
 # ndvi stuff
