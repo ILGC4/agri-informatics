@@ -1,5 +1,7 @@
 from datetime import datetime
 from planet import Auth
+import rasterio
+import geopandas as gpd
 from planet import Session, data_filter,reporting
 import os
 import asyncio
@@ -242,3 +244,35 @@ def extract_last_three_digits_string(geom):
     last_three_digits_string = '_'.join(last_three_digits_list)
     
     return last_three_digits_string
+
+def extract_corner_coordinates(tif_file):
+    with rasterio.open(tif_file) as src:
+        meta = src.meta
+        epsg_code = src.crs.to_epsg()
+        num_rows, num_cols = src.shape
+        transform = src.transform
+
+        # Calculate the coordinates of the corners
+        top_left = (transform[2], transform[5])
+        top_right = (transform[2] + num_cols * transform[0], transform[5])
+        bottom_left = (transform[2], transform[5] + num_rows * transform[4])
+        bottom_right = (transform[2] + num_cols * transform[0], transform[5] + num_rows * transform[4])
+
+        # Create a GeoDataFrame with corner coordinates
+        corner_df = gpd.GeoDataFrame(geometry=gpd.points_from_xy(
+            [top_left[0], top_right[0], bottom_left[0], bottom_right[0]],
+            [top_left[1], top_right[1], bottom_left[1], bottom_right[1]]
+        ))
+
+        # Set the CRS of the GeoDataFrame
+        corner_df.crs = f'EPSG:{epsg_code}'
+        corner_df = corner_df.to_crs(epsg=4326)
+        print("corner cordinates",corner_df)
+        
+        return {
+            "epsg_code": epsg_code,
+            "top_left": corner_df.geometry.iloc[0],
+            "top_right": corner_df.geometry.iloc[1],
+            "bottom_left": corner_df.geometry.iloc[2],
+            "bottom_right": corner_df.geometry.iloc[3]
+        }
