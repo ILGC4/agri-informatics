@@ -4,15 +4,16 @@ from ipyleaflet import Map, DrawControl
 import json
 from leafmap.toolbar import change_basemap
 import os
-import ipywidgets as widgets
-import tempfile
+# import ipywidgets as widgets
+# import tempfile
 import asyncio
 from pathlib import Path
-import time
-from api_main import main
-from solara.lab import task
-import io
-from PIL import Image as PILImage
+# import time
+import csv
+# from api_main import main
+# from solara.lab import task
+# import io
+# from PIL import Image as PILImage
 import matplotlib.pyplot as plt
 from ipyleaflet import GeoJSON, Map, WidgetControl
 from ipywidgets import HTML, Layout
@@ -81,6 +82,16 @@ def delete_geojson_on_startup(file_path):
             print(f"Deleted {file_path} successfully.")
     except Exception as e:
         print(f"Failed to delete {file_path}: {e}")
+
+def get_data_from_csv(file_path):
+    fields=['cloud_cover', 'pixel_resolution', 'clear_percent', 'satellite_id', 'date', 'gsd']
+    extracted=[]
+    with open(file_path, newline='') as file:
+        reader=csv.DictReader(file)
+        for row in reader:
+            extracted.append([row[field] for field in fields])
+    print(f"Got data points from filter_df file: {extracted}")
+    return extracted
 
 # def handle_upload(change):
 #     if change.new:
@@ -349,6 +360,7 @@ def TextCard(color, text, title=None):
 @solara.component
 def DraggableGrid():
     if display_grid.get():
+        extracted_data=get_data_from_csv('./Images/filter_df.csv')
         grid_layout_initial = [
             {"h": 10, "i": "0", "moved": False, "w": 10, "x": 0, "y": 0},
             {"h": 3, "i": "1", "moved": False, "w": 3, "x": 3, "y": 0},
@@ -359,12 +371,12 @@ def DraggableGrid():
         ]
         colors = "blue blue blue blue blue blue".split()
         dummy_texts = [
-            "Lorem ipsum dolor sit.",
-            "Consectetur adipiscing.",
-            "Sed do eiusmod tempor.",
-            "Ut labore et dolore.",
-            "Ut enim ad minim veniam.",
-            "Quis nostrud exercitation."
+            f"Cloud Cover: {extracted_data[0][0]}",
+            f"Pixel Resolution: {extracted_data[0][1]}",
+            f"Clear Percent: {extracted_data[0][2]}",
+            f"Satellite ID: {extracted_data[0][3]}",
+            f"Date: {extracted_data[0][4]}",
+            f"GSD: {extracted_data[0][5]}"
         ]
 
         grid_layout, set_grid_layout = solara.use_state(grid_layout_initial)
@@ -390,7 +402,7 @@ def Page():
     with solara.Column(style={"min-width": "500px", "display": "flex", "justifyContent": "center", "alignItems": "center", "flexDirection": "column"}):
         solara.Title("Sugarmill Farm Management Tool")
         PolygonClickMessage()
-        FileDrop()
+        # FileDrop()
         SelectionConfirmationMessage()  
         # Rest of your existing UI components
 
