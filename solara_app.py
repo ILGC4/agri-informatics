@@ -172,13 +172,14 @@ class Map(leafmap.Map):
                 if polygon.contains(clicked_point):
                     asyncio.create_task(display_message_for_seconds("Selected a polygon, please wait for results", 5))
                     selected_polygon_id=feature['id']
+                    print(selected_polygon_id) 
                     found=True
                     break
             if not found:  
                 asyncio.create_task(display_message_for_seconds("Please click within a polygon", 5)) 
                 selected_polygon_id=None
 
-
+ 
     
     def setup_draw_control(self):
         existing_draw_control=next((control for control in self.controls if isinstance(control, DrawControl)), None)
@@ -540,9 +541,9 @@ def Page():
         data_ctrl=False,
     )
         
-    if selected_polygon_id is not None:
-        DisplayImages()
-        DateDropdown()
-        DraggableGrid()
+    
+    DisplayImages()
+    DateDropdown() 
+    DraggableGrid()
     solara.Text(f"Zoom: {zoom.value}")
     solara.Text(f"Center: {center.value}")  
