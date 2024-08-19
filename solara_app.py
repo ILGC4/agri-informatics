@@ -105,6 +105,8 @@ def get_data_from_csv(file_path):
     fields = ['cloud_cover', 'pixel_resolution', 'clear_percent', 'satellite_id', 'gsd', 'heavy_haze_percent']
     data_by_date = {}
     dates_list = []
+    if not os.path.exists(file_path):
+        return None, None
     with open(file_path, newline='') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -387,37 +389,38 @@ def TextCard(color, text, title=None):
 
 @solara.component
 def DraggableGrid():
-    if display_info.get():
-        data_by_date, _=get_data_from_csv('./Images/filter_df.csv')
-        date_data = data_by_date.get(selected_date.get(), [])
-        if not date_data:
-            return solara.Text("Please select a date.", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
-        
-        grid_layout_initial = [
-            {"h": 3, "i": str(i), "moved": False, "w": 3, "x": i % 3 * 3, "y": i // 3 * 3} for i in range(6)
-        ]
-        colors = ["blue"]*6
-        # fields = ['Cloud Cover', 'Pixel Resolution', 'Clear Percent', 'Satellite ID', 'GSD', 'Heavy Haze Percent']
-        dummy_texts = [
-            f"Cloud Cover: {date_data[0]['cloud_cover']}",
-            f"Pixel Resolution: {date_data[0]['pixel_resolution']}",
-            f"Clear Percent: {date_data[0]['clear_percent']}",
-            f"Satellite ID: {date_data[0]['satellite_id']}",
-            f"GSD: {date_data[0]['gsd']}",
-            f"Heavy Haze Percent: {date_data[0]['heavy_haze_percent']}"
-        ]
- 
-        grid_layout, set_grid_layout = solara.use_state(grid_layout_initial) 
+    data_by_date, _=get_data_from_csv('./Images/filter_df.csv')
+    if data_by_date:
+        if display_info.get():
+            date_data = data_by_date.get(selected_date.get(), [])
+            if not date_data:
+                return solara.Text("Please select a date.", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
+            
+            grid_layout_initial = [
+                {"h": 3, "i": str(i), "moved": False, "w": 3, "x": i % 3 * 3, "y": i // 3 * 3} for i in range(6)
+            ]
+            colors = ["blue"]*6
+            # fields = ['Cloud Cover', 'Pixel Resolution', 'Clear Percent', 'Satellite ID', 'GSD', 'Heavy Haze Percent']
+            dummy_texts = [
+                f"Cloud Cover: {date_data[0]['cloud_cover']}",
+                f"Pixel Resolution: {date_data[0]['pixel_resolution']}",
+                f"Clear Percent: {date_data[0]['clear_percent']}",
+                f"Satellite ID: {date_data[0]['satellite_id']}",
+                f"GSD: {date_data[0]['gsd']}",
+                f"Heavy Haze Percent: {date_data[0]['heavy_haze_percent']}"
+            ]
+    
+            grid_layout, set_grid_layout = solara.use_state(grid_layout_initial) 
 
-        items = [TextCard(title=f"Item {i}", color=colors[i], text=dummy_texts[i]) for i in range(len(dummy_texts))]
-        
-        return solara.GridDraggable(
-            items=items,
-            grid_layout=grid_layout,
-            resizable=True,
-            draggable=True, 
-            on_grid_layout=set_grid_layout
-        )
+            items = [TextCard(title=f"Item {i}", color=colors[i], text=dummy_texts[i]) for i in range(len(dummy_texts))]
+            
+            return solara.GridDraggable(
+                items=items,
+                grid_layout=grid_layout,
+                resizable=True,
+                draggable=True, 
+                on_grid_layout=set_grid_layout
+            )
 
 @solara.component
 def Page():
