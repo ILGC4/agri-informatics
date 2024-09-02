@@ -10,6 +10,18 @@ from rasterio.mask import mask
 import matplotlib.pyplot as plt
 from Utils.api_utils import PlanetData, read_geojson, extract_corner_coordinates
 
+def ndvi_time_series(tif_file, geom):
+    with rasterio.open(tif_file) as src:
+        gdf = gpd.GeoDataFrame({'geometry': [shape(geom)]}, crs="EPSG:4326")
+        gdf = gdf.to_crs(src.crs)
+        clipped_img, _ = mask(dataset=src, shapes=gdf.geometry, crop=True)
+        nir = clipped_img[3, :, :]  
+        red = clipped_img[2, :, :]
+        ndvi = (nir - red) / (np.where((nir + red) == 0, 1, (nir + red)))
+        return ndvi.mean()  
+
+
+
 def normalize_bands(img):
     normalized_img = np.zeros_like(img, dtype=np.float32)
     for i in range(img.shape[0]):
@@ -93,6 +105,18 @@ async def main():
                 # Plot RGB image and NDVI
                 plot_rgb_and_ndvi(rgb_img, ndvi)
                 plot_rgb_and_ndvi(rgb_img, ndvi, save_path=f'plots/{date_str}_polygon_{geom_idx + 1}_tif_{idx + 1}.png')
+
+    dates = []
+    ndvi_values = []
+
+    for tif_file in pathlib.Path('./path/to/tiff/files').glob('*.tif'):
+        date_str = tif_file.stem[:6]  
+        dates.append(date_str)
+        ndvi_value = ndvi_time_series(tif_file, geom)
+        ndvi_values.append(ndvi_value)
+    
+    with open('ndvi_data.json', 'w') as f:
+        json.dump({'dates': dates, 'ndvi_values': ndvi_values}, f)
 
 if __name__ == "__main__":
     asyncio.run(main())
