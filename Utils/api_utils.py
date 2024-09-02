@@ -98,22 +98,23 @@ class PlanetData():
     async def search(self):
         combined_filters = self.__get_combined_filter__()
         item_list_total = []
+        new_item_list = []
         search_df_total = pd.DataFrame()
 
         async with Session() as sess:
             cl = sess.client('data')
             for each_combined_filter in combined_filters:
-                print("Current combined filter:", each_combined_filter)
+                # print("Current combined filter:", each_combined_filter)
                 request = await cl.create_search(name='planet_client_demo', search_filter=each_combined_filter, item_types=self.item_types)
                 items = cl.run_search(search_id=request['id'], limit=self.limit)
                 item_list = [i async for i in items]
                 if item_list:
                     # changed item list total from _ to ensure 1 image per day
-                    item_list_total, search_df = self.filter_search_result(item_list)
+                    item_list_total, search_df = self.filter_search_result(item_list, new_item_list)
                     # item_list_total.extend(item_list)
                     search_df_total = pd.concat([search_df_total, search_df], ignore_index=True)
                 else:
-                    print("No images found for the days given that satisfy the filters")
+                    print("No images found for the days given that satisfy the filters", )
 
         if len(item_list_total) == 0:
             print("No images found for the days given that satisfy the filters")
@@ -136,8 +137,9 @@ class PlanetData():
 
             return asset_desc
     
-    def filter_search_result(self,item_list):
-        new_item_list=[]
+    def filter_search_result(self,item_list, new_item_list=None):
+        if new_item_list is None:
+            new_item_list = []
         all_properties=[]
         for item in item_list:
             properties=item['properties']
@@ -145,14 +147,13 @@ class PlanetData():
             properties['date']=item['id'].split("_")[0]
             all_properties.append(properties)
         search_df=pd.DataFrame(all_properties)
-        print(search_df)
+        # print(search_df)
         search_df_filtered=search_df.sort_values('cloud_cover', ascending=True).drop_duplicates(['date'])
         filtered_item_ids=search_df_filtered['id'].tolist()
 
         for item in item_list:
             if item['id'] in filtered_item_ids:
-                new_item_list.append(item)
-
+                new_item_list.append(item)              
         search_df_filtered['acquired']=pd.to_datetime(search_df_filtered['acquired'])  
         return new_item_list,search_df_filtered
 
@@ -209,13 +210,20 @@ class PlanetData():
     
     async def download_multiple_assets(self, geom=None, asset_type_id=None, item_type='PSScene', id_list=None):
         self.geom = geom
-        print("self geom",self.geom)
+        # print("self geom",self.geom)
         filter_df_name = extract_last_three_digits_string(self.geom)
         item_list, search_df = await self.search()
         csv_file_path = os.path.join(self.directory, f"{filter_df_name}_filter_df.csv")
         search_df.to_csv(csv_file_path, index=False)
         print(f"DataFrame saved to {csv_file_path}")
         
+        if id_list is None:
+            download_tasks = [self.download_asset(item['id'], asset_type_id) for item in item_list]
+            print("doing this")
+        else:
+            download_tasks = [self.download_asset(idx, asset_type_id) for idx in id_list]
+            item_list = id_list
+
         download_tasks = [self.download_asset_w_dbcheck(
             item['id'], 
             asset_type_id, 
@@ -282,7 +290,7 @@ def extract_corner_coordinates(tif_file):
         # Set the CRS of the GeoDataFrame
         corner_df.crs = f'EPSG:{epsg_code}'
         corner_df = corner_df.to_crs(epsg=4326)
-        print("corner cordinates",corner_df)
+        # print("corner cordinates",corner_df)
         
         return {
             "epsg_code": epsg_code,
