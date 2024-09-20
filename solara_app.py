@@ -64,11 +64,12 @@ async def display_message_for_seconds(msg, seconds): #determines how long to dis
     
 @solara.component
 def DateDropdown(): #dropdown list for dates from database (should only be displayed after collect info is clicked)
-    if display_info.get():
+    if info_collected.get() and selected_polygon_id.get() is not None:
         data_by_date, dates_list=get_data_from_csv('./Images')
         def on_data_change(new_date):
             print(f"Selected Date: {new_date}")
             selected_date.set(new_date)
+            get_and_display_recent_images()
         return solara.Select(
             label="Choose a date",
             values=dates_list,
@@ -206,21 +207,26 @@ async def fetch_api():
 
 
 
-def get_recent_images(directory_path): #get images from directory and sort them by date
+def test_get_recent_images(directory_path, selected_date): 
     path = Path(directory_path)
-    all_files = list(path.glob('*.png'))
+    all_files = list(path.glob('*.png'))  
     print(f"All files in directory: {all_files}")
+
     date_image_pairs = []
     for file_path in all_files:
         try:
-            date_str = file_path.stem.split('_')[0]  
-            date_obj = datetime.datetime.strptime(date_str, '%Y%m%d') 
-            date_image_pairs.append((date_obj, file_path))
+            date_str = file_path.stem.split('_')[0]
+            date_obj = datetime.datetime.strptime(date_str, '%Y%m%d')  
+            
+            if date_str == selected_date.replace("-", ""):
+                date_image_pairs.append((date_obj, file_path))
         except Exception as e:
             print(f"Error parsing file {file_path}: {str(e)}")
+
     sorted_image_paths = [file_path for date_obj, file_path in sorted(date_image_pairs)]
-    print(f"Sorted image paths: {sorted_image_paths}")
+    print(f"Sorted image paths for {selected_date}: {sorted_image_paths}")
     return sorted_image_paths
+
   
 
 def load_ndvi_data():
@@ -230,19 +236,19 @@ def load_ndvi_data():
  
  
 def get_and_display_recent_images(): #plot images on website
-        if display_info.get():
+        if display_info.get() and selected_date.get() != "Select a date":
             directory_path = './plots/'  
-            print('Fetching recent images...')
-            recent_images = get_recent_images(directory_path)
-            # dates, ndvi_values = load_ndvi_data()
+            print('Fetching recent images for the date: {selected_date.get()}...')
+            recent_images = get_recent_images(directory_path, selected_date.get())
+            dates, ndvi_values = load_ndvi_data()
 
             
             # plot images using plt
             figs=[]
-            dummy_dates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'] #currently being used as we have no tiff files
-            dummy_ndvi_values = [0.2, 0.3, 0.5, 0.6, 0.7]
+            # dummy_dates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'] #currently being used as we have no tiff files
+            # dummy_ndvi_values = [0.2, 0.3, 0.5, 0.6, 0.7]
             fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
-            ax.plot(dummy_dates, dummy_ndvi_values, marker='o', linestyle='-', color='green')
+            ax.plot(dates, ndvi_values, marker='o', linestyle='-', color='green')
             ax.set_title("NDVI Time Series")
             ax.set_xlabel("Date")
             ax.set_ylabel("NDVI Value")

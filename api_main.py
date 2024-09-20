@@ -15,8 +15,8 @@ def ndvi_time_series(tif_file, geom):
         gdf = gpd.GeoDataFrame({'geometry': [shape(geom)]}, crs="EPSG:4326")
         gdf = gdf.to_crs(src.crs)
         clipped_img, _ = mask(dataset=src, shapes=gdf.geometry, crop=True)
-        nir = clipped_img[3, :, :]  
-        red = clipped_img[2, :, :]
+        nir = clipped_img[7, :, :]  
+        red = clipped_img[5, :, :]
         ndvi = (nir - red) / (np.where((nir + red) == 0, 1, (nir + red)))
         return ndvi.mean()  
 
