@@ -319,7 +319,7 @@ def DraggableGrid(): #grid to display info
         if display_info.get():
             date_data = data_by_date.get(selected_date.get(), [])
             if not date_data:
-                return solara.Text("Please select a date.", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
+                return solara.Text(" ", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
             
             grid_layout_initial = [
                 {"h": 3, "i": str(i), "moved": False, "w": 3, "x": i % 3 * 3, "y": i // 3 * 3} for i in range(6)
