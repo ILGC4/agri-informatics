@@ -206,11 +206,22 @@ async def fetch_api():
 
 
 
-def test_get_recent_images(directory_path): #just display all images from file
+def get_recent_images(directory_path): #get images from directory and sort them by date
     path = Path(directory_path)
-    all_files = list(path.glob('*'))  # List all files without filtering
+    all_files = list(path.glob('*.png'))
     print(f"All files in directory: {all_files}")
-    return all_files  
+    date_image_pairs = []
+    for file_path in all_files:
+        try:
+            date_str = file_path.stem.split('_')[0]  
+            date_obj = datetime.datetime.strptime(date_str, '%Y%m%d') 
+            date_image_pairs.append((date_obj, file_path))
+        except Exception as e:
+            print(f"Error parsing file {file_path}: {str(e)}")
+    sorted_image_paths = [file_path for date_obj, file_path in sorted(date_image_pairs)]
+    print(f"Sorted image paths: {sorted_image_paths}")
+    return sorted_image_paths
+  
 
 def load_ndvi_data():
     with open('ndvi_data.json', 'r') as f:
@@ -222,13 +233,13 @@ def get_and_display_recent_images(): #plot images on website
         if display_info.get():
             directory_path = './plots/'  
             print('Fetching recent images...')
-            recent_images = test_get_recent_images(directory_path)
+            recent_images = get_recent_images(directory_path)
             # dates, ndvi_values = load_ndvi_data()
 
             
             # plot images using plt
             figs=[]
-            dummy_dates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'] #currently being used as we havae no tiff files
+            dummy_dates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'] #currently being used as we have no tiff files
             dummy_ndvi_values = [0.2, 0.3, 0.5, 0.6, 0.7]
             fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
             ax.plot(dummy_dates, dummy_ndvi_values, marker='o', linestyle='-', color='green')
