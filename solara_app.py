@@ -24,6 +24,7 @@ import state
 
 
 global_geojson = [] #cause literally nothing else was working i wanna kms so bad
+polygon_coords = None
 display_info = solara.reactive(False) 
 show_info=solara.reactive(False)
 images_figures = solara.reactive([])
@@ -150,6 +151,7 @@ class Map(leafmap.Map):
 
     def handle_map_click(self, **kwargs): #clicking point on map and checking whether it is in a polygon or not
         global global_geojson, selected_polygon_id
+        global polygon_coords
         coordinates = kwargs.get('coordinates')
         if coordinates:
             clicked_point = Point(coordinates[1], coordinates[0])
@@ -161,6 +163,8 @@ class Map(leafmap.Map):
                     asyncio.create_task(display_message_for_seconds("Selected a polygon, please wait for results", 5))
                     selected_polygon_id=feature['id']
                     print(selected_polygon_id) 
+                    polygon_coords = list(polygon.exterior.coords)
+                    print(f"Polygon Coordinates: {polygon_coords}")
                     found=True
                     break
             if not found:  
@@ -220,7 +224,7 @@ async def fetch_api():
 
 
 
-def test_get_recent_images(directory_path, selected_date): 
+def get_recent_images(directory_path, selected_date): 
     path = Path(directory_path)
     all_files = list(path.glob('*.png'))  
     print(f"All files in directory: {all_files}")
@@ -306,6 +310,14 @@ def DisplayImages(): #component to display images
     print("No images to display")
     return None
 
+def get_weather_metrics(polygon_coords, date):
+    return {
+        "Temperature": "28°C",
+        "Humidity": "60%",
+        "Wind Speed": "15 km/h",
+        "Precipitation": "5 mm"
+    }
+
 @solara.component 
 def TextCard(color, text, title=None): #each text card in grid
     if display_info.get() is True:
@@ -327,37 +339,33 @@ def TextCard(color, text, title=None): #each text card in grid
 
 @solara.component
 def DraggableGrid(): #grid to display info
-    data_by_date, _=get_data_from_csv('./Images')
-    if data_by_date:
-        if display_info.get():
-            date_data = data_by_date.get(selected_date.get(), [])
-            if not date_data:
-                return solara.Text(" ", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
+    weather_data = get_weather_metrics(polygon_coords, selected_date.get())
+    if display_info.get():
+        if not weather_data:
+            return solara.Text("No data available", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
             
-            grid_layout_initial = [
-                {"h": 3, "i": str(i), "moved": False, "w": 3, "x": i % 3 * 3, "y": i // 3 * 3} for i in range(6)
-            ]
-            colors = ["blue"]*6
-            dummy_texts = [
-                f"Cloud Cover: {date_data[0]['cloud_cover']}",
-                f"Pixel Resolution: {date_data[0]['pixel_resolution']}",
-                f"Clear Percent: {date_data[0]['clear_percent']}",
-                f"Satellite ID: {date_data[0]['satellite_id']}",
-                f"GSD: {date_data[0]['gsd']}",
-                f"Heavy Haze Percent: {date_data[0]['heavy_haze_percent']}"
-            ]
-    
-            grid_layout, set_grid_layout = solara.use_state(grid_layout_initial) 
+        grid_layout_initial = [
+            {"h": 3, "i": str(i), "moved": False, "w": 3, "x": i % 2 * 3, "y": i // 2 * 3} for i in range(4)
+        ]
+        colors = ["blue"]*4
+        dummy_texts = [
+            f"Temperature: {weather_data['Temperature']}",
+            f"Humidity: {weather_data['Humidity']}",
+            f"Wind Speed: {weather_data['Wind Speed']}",
+            f"Precipitation: {weather_data['Precipitation']}",
+        ]
 
-            items = [TextCard(title=f"Item {i}", color=colors[i], text=dummy_texts[i]) for i in range(len(dummy_texts))]
-            
-            return solara.GridDraggable(
-                items=items,
-                grid_layout=grid_layout,
-                resizable=True,
-                draggable=True, 
-                on_grid_layout=set_grid_layout
-            )
+        grid_layout, set_grid_layout = solara.use_state(grid_layout_initial) 
+
+        items = [TextCard(title=f"Item {i}", color=colors[i], text=dummy_texts[i]) for i in range(len(dummy_texts))]
+        
+        return solara.GridDraggable(
+            items=items,
+            grid_layout=grid_layout,
+            resizable=True,
+            draggable=True, 
+            on_grid_layout=set_grid_layout
+        )
 
 
 @solara.component
