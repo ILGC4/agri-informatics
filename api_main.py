@@ -103,13 +103,15 @@ async def main():
         credentials=credentials,
         clear_percent_filter_value=(50, 100),  # clear images between 50% to 100%
         date_range={'gte': '2024-05-07', 'lte': '2024-05-14'}, 
+        # date_range = state.date_range,
         cloud_cover_filter_value=(0, 100),  # max cloud cover of 80%
         item_types=['PSScene'],  # satellite images
         limit=10,  # limit the number of images to retrieve
         directory="./Images/",  # directory to save downloaded stuff
         interval=3
+        # interval = int(state.interval)
     )
-
+    print("date_range and interval", state.date_range, state.interval)
     # Iterate over each geometry
     for geom_idx, geom in enumerate(geom_list):
         print(f"Processing geometry {geom_idx + 1}...")
@@ -117,12 +119,11 @@ async def main():
         # Download assets based on the current geometry
         results, item_list, search_df = await planet_data.download_multiple_assets(geom=geom, asset_type_id='ortho_analytic_8b_sr')
         tif_files = [result for result in results if pathlib.Path(result).suffix == '.tif']
-
         # Iterate over each tiff file for the current geometry
         for idx, tif_file in enumerate(tif_files):
             filename = str(tif_file)
             date_str = filename[7:15]  # Extract date from filename
-            
+            state.dates.append(date_str)
             with rasterio.open(tif_file) as src:
                 # Get NDVI for both full image and clipped area
                 ndvi_full_mean, ndvi_full, ndvi_clipped_mean, ndvi_clipped = ndvi_time_series(tif_file, geom)
@@ -154,6 +155,6 @@ async def main():
                     rgb_img_clipped = np.dstack((red_clipped, green_clipped, blue_clipped))
 
                     plot_rgb_and_ndvi(rgb_img_clipped, ndvi_clipped, "Clipped Area", save_path=f'plots/{date_str}_clipped_polygon_{geom_idx + 1}_tif_{idx + 1}.png')
-
+    return state.dates
 if __name__ == "__main__":
     asyncio.run(main())
