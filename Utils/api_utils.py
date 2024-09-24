@@ -13,8 +13,8 @@ from Utils.database_utils import check_area_coverage, add_new_image
 
 connection_params = {
     'dbname': 'smurf',
-    'user': 'postgres',
-    'password': 'postgres',  # Replace 'your_password' with the actual password
+    'user': 'clumsy',
+    'password': 'clumsysmurf',  
     'host': 'localhost',
     'port': '5432'
 }
@@ -217,12 +217,12 @@ class PlanetData():
         search_df.to_csv(csv_file_path, index=False)
         print(f"DataFrame saved to {csv_file_path}")
         
-        if id_list is None:
+        '''if id_list is None:
             download_tasks = [self.download_asset(item['id'], asset_type_id) for item in item_list]
             print("doing this")
         else:
             download_tasks = [self.download_asset(idx, asset_type_id) for idx in id_list]
-            item_list = id_list
+            item_list = id_list'''
 
         download_tasks = [self.download_asset_w_dbcheck(
             item['id'], 
