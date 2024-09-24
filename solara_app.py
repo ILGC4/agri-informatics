@@ -17,6 +17,8 @@ from matplotlib.figure import Figure
 from matplotlib.dates import DateFormatter
 import glob
 import datetime
+import solara.lab
+import state
 
 
 
@@ -64,20 +66,31 @@ async def display_message_for_seconds(msg, seconds): #determines how long to dis
     
 @solara.component
 def DateDropdown(): #dropdown list for dates from database (should only be displayed after collect info is clicked)
-    if info_collected.get() and selected_polygon_id.get() is not None:
-        data_by_date, dates_list=get_data_from_csv('./Images')
-        def on_data_change(new_date):
-            print(f"Selected Date: {new_date}")
-            selected_date.set(new_date)
-            get_and_display_recent_images()
-        return solara.Select(
-            label="Choose a date",
-            values=dates_list,
-            value=selected_date,
-            on_value=on_data_change,
-            dense=True,
-            style={"width": "100%", "maxWidth": "400px"}
+    input_range = solara.use_reactive(tuple([datetime.date.today(), datetime.date.today() + datetime.timedelta(days=1)]))
+    interval = solara.use_reactive("1")  # Initialize interval as a string to capture user input
+
+    def set_interval(value):
+        # Update interval when the user inputs a new value
+        interval.set(value)
+        state.interval = interval.value
+
+    with solara.Column(style="width: 400px;"):
+        # Text input for the interval
+        solara.InputText(
+            label="Interval (in days)",
+            value=interval,
+            on_value=set_interval,
+            # placeholder="Enter the interval",
         )
+        
+        # InputDateRange to select start and end date from the calendar
+        with solara.lab.InputDateRange(
+            input_range,
+            sort=True
+        ):
+            pass
+        if input_range.value and len(input_range.value) == 2:
+            state.date_range = {'gte': input_range.value[0].isoformat(), 'lte': input_range.value[1].isoformat()}
 
 @solara.component
 def SelectionConfirmationMessage(): #display message at top of screen once shape is clicked and selection of shape confirmed
