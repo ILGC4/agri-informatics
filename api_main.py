@@ -156,5 +156,6 @@ async def main():
 
                     plot_rgb_and_ndvi(rgb_img_clipped, ndvi_clipped, "Clipped Area", save_path=f'plots/{date_str}_clipped_polygon_{geom_idx + 1}_tif_{idx + 1}.png')
     return state.dates
+
 if __name__ == "__main__":
     asyncio.run(main())

@@ -75,7 +75,7 @@ def DateDropdown(): #dropdown list for dates from database (should only be displ
         interval.set(value)
         state.interval = interval.value
 
-    with solara.Column(style="width: 400px;"):
+    with solara.Column(style="width: 400px; padding-top: 150px"):
         # Text input for the interval
         solara.InputText(
             label="Interval (in days)",
