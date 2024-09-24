@@ -48,7 +48,7 @@ def add_new_image(tile_id, acquisition_date, coordinates, image_path, filter_df_
     
     # SQL command to insert new data
     cur.execute(
-        "INSERT INTO satellite_images (tile_id, acquisition_date, geometry, image_path, filter_df) VALUES (%s, %s, ST_GeomFromText(%s, 4326), %s, %s)",
+        "INSERT INTO satellite_images (tile_id, acquisition_date, geometry, image_path, filter_df_name) VALUES (%s, %s, ST_GeomFromText(%s, 4326), %s, %s)",
         (tile_id, acquisition_date, wkt_geometry, image_path, filter_df_name))
     
     # Commit changes
