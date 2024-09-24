@@ -62,8 +62,6 @@ async def display_message_for_seconds(msg, seconds): #determines how long to dis
     click_message.set(msg)  
     await asyncio.sleep(seconds)  
     click_message.set("")  
-
-
     
 @solara.component
 def DateDropdown(): #dropdown list for dates from database (should only be displayed after collect info is clicked)
