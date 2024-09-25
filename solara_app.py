@@ -339,8 +339,10 @@ def TextCard(color, text, title=None): #each text card in grid
 
 @solara.component
 def DraggableGrid(): #grid to display info
-    weather_data = get_weather_metrics(polygon_coords, selected_date.get())
     if display_info.get():
+        if polygon_coords is None or not polygon_coords:
+            return solara.Text("Please select a polygon first.", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
+        weather_data = get_weather_metrics(polygon_coords, selected_date.get())
         if not weather_data:
             return solara.Text("No data available", style={"color": "red", "fontSize": "16px", "marginTop": "10px"})
             
