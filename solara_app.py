@@ -62,8 +62,6 @@ async def display_message_for_seconds(msg, seconds): #determines how long to dis
     click_message.set(msg)  
     await asyncio.sleep(seconds)  
     click_message.set("")  
-
-
     
 @solara.component
 def DateDropdown(): #dropdown list for dates from database (should only be displayed after collect info is clicked)
@@ -75,7 +73,7 @@ def DateDropdown(): #dropdown list for dates from database (should only be displ
         interval.set(value)
         state.interval = interval.value
 
-    with solara.Column(style="width: 400px;"):
+    with solara.Column(style="width: 400px; padding-top: 150px"):
         # Text input for the interval
         solara.InputText(
             label="Interval (in days)",
