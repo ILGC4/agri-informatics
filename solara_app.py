@@ -68,6 +68,11 @@ def DateDropdown(): #dropdown list for dates from database (should only be displ
     input_range = solara.use_reactive(tuple([datetime.date.today(), datetime.date.today() + datetime.timedelta(days=1)]))
     interval = solara.use_reactive("1")  # Initialize interval as a string to capture user input
 
+    def on_date_change(value):
+        if value and len(value)==2:
+            selected_date.set(value[0].isoformat())
+            print(f"Updated date to {selected_date.get()}")
+
     def set_interval(value):
         # Update interval when the user inputs a new value
         interval.set(value)
@@ -85,7 +90,8 @@ def DateDropdown(): #dropdown list for dates from database (should only be displ
         # InputDateRange to select start and end date from the calendar
         with solara.lab.InputDateRange(
             input_range,
-            sort=True
+            sort=True,
+            on_value=on_date_change
         ):
             pass
         if input_range.value and len(input_range.value) == 2:
@@ -251,9 +257,9 @@ def load_ndvi_data():
  
  
 def get_and_display_recent_images(): #plot images on website
-        if display_info.get() and selected_date.get() != "Select a date":
+        if display_info.get():
             directory_path = './plots/'  
-            print('Fetching recent images for the date: {selected_date.get()}...')
+            print(f'Fetching recent images for the date: {selected_date.get()}...')
             recent_images = get_recent_images(directory_path, selected_date.get())
             dates, ndvi_values = load_ndvi_data()
 
