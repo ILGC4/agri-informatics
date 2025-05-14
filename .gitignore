@@ -1,1 +1,5 @@
 Images/*.tif 
+__pycache__/
+Mill_Gate_Survey_2024-25.geojson
+Mill Gate Survey 2024-25_cleaned.csv
+api_key/ee-chaitanyamodi-6874ede8f64c.json
