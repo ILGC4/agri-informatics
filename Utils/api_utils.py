@@ -9,12 +9,17 @@ import pandas as pd
 import json
 from datetime import timedelta
 import sys
+import requests
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(parent_dir)
 from Utils.database_utils import check_area_coverage, add_new_image
 
 connection_params = {
-    'dbname': 'smurf',
-    'user': 'clumsy',
-    'password': 'clumsysmurf',  
+    'database': 'postgres',
+    'user': 'smurfs',
+    'password': 'smurfs123',  
     'host': 'localhost',
     'port': '5432'
 }
@@ -57,6 +62,10 @@ class PlanetData():
         for date_range in date_ranges:
             date_filter = data_filter.date_range_filter("acquired", gte=date_range['gte'], lte=date_range['lte'])
             combined_filters.append(data_filter.and_filter([date_filter] + base_filters))
+
+        # print("Current filters:", base_filters)
+        # print("Date ranges:", date_ranges)
+        # print("combined filters", combined_filters)
 
         return combined_filters
     
@@ -114,10 +123,10 @@ class PlanetData():
                     # item_list_total.extend(item_list)
                     search_df_total = pd.concat([search_df_total, search_df], ignore_index=True)
                 else:
-                    print("No images found for the days given that satisfy the filters", )
+                    print("No images found for the days given that satisfy the filters")
 
         if len(item_list_total) == 0:
-            print("No images found for the days given that satisfy the filters")
+            print("No images found for the days given that satisfy the filters base.")
             sys.exit(1)
 
         return item_list_total, search_df_total
@@ -300,3 +309,28 @@ def extract_corner_coordinates(tif_file):
             "bottom_right": corner_df.geometry.iloc[3]
         }
     
+def get_sugarcane_stage(date_of_planting, forecast_time):
+    days_since_planting = (forecast_time - date_of_planting).days
+    if days_since_planting <= 35:
+        return "Germination"
+    elif days_since_planting <= 100:
+        return "Tillering"
+    elif days_since_planting <= 270:
+        return "Grand Growth"
+    else:
+        return "Ripening"
+    
+def get_stage_thresholds(stage):
+    thresholds = {
+        "Germination": {"min_temp": 20.0, "max_temp": 32.0, "min_humidity": 50, "max_humidity": 80, "max_3h_rainfall": 10.0},
+        "Tillering": {"min_temp": 18.0, "max_temp": 35.0, "min_humidity": 50, "max_humidity": 80, "max_3h_rainfall": 10.0},
+        "Grand Growth": {"min_temp": 14.0, "max_temp": 30.0, "min_humidity": 80, "max_humidity": 85, "max_3h_rainfall": 10.0},
+        "Ripening": {"min_temp": 20.0, "max_temp": 30.0, "min_humidity": 50, "max_humidity": 55, "max_3h_rainfall": 10.0},
+    }
+    return thresholds.get(stage, {})
+
+def fetch_forecast_data(lat, lon, api_key):
+    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()

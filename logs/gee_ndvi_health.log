@@ -1,0 +1,65 @@
+2025-04-23 23:29:06 - gee_ndvi_health - INFO - Script directory: /home/smurfs/agri_info2/Utils
+2025-04-23 23:29:06 - gee_ndvi_health - INFO - Project directory: /home/smurfs/agri_info2
+2025-04-23 23:29:06 - gee_ndvi_health - INFO - Service account path: /home/smurfs/agri_info2/api_key/ee-chaitanyamodi-6874ede8f64c.json
+2025-04-23 23:29:10 - gee_ndvi_health - INFO - Successfully initialized Earth Engine with service account
+2025-04-23 23:29:10 - gee_ndvi_health - INFO - Google Earth Engine initialized successfully
+2025-04-23 23:29:10 - gee_ndvi_health - INFO - Retrieved 100 farms with geometries and planting dates
+2025-04-23 23:29:10 - gee_ndvi_health - INFO - Processing 5 villages
+2025-04-23 23:29:10 - gee_ndvi_health - INFO - 
+Processing village_id: 1
+2025-04-23 23:33:25 - gee_ndvi_health - INFO - Using Sentinel-2 image from 2025-04-20 for village 1
+2025-04-23 23:33:28 - gee_ndvi_health - INFO - Updated plot 280084700250206 health to in danger (3) and NDVI to 0.1543
+2025-04-23 23:33:28 - gee_ndvi_health - INFO - Processed 1 farms in village 1
+2025-04-23 23:33:28 - gee_ndvi_health - INFO - 
+Processing village_id: 2
+2025-04-23 23:33:32 - gee_ndvi_health - INFO - Using Sentinel-2 image from 2025-04-20 for village 2
+2025-04-23 23:33:34 - gee_ndvi_health - INFO - Updated plot 280741300378102 health to in danger (3) and NDVI to 0.1385
+2025-04-23 23:33:36 - gee_ndvi_health - INFO - Updated plot 280738600037201 health to in danger (3) and NDVI to 0.1338
+2025-04-23 23:33:38 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280017400337102, skipping...
+2025-04-23 23:33:40 - gee_ndvi_health - INFO - Updated plot 280742000192801 health to in danger (3) and NDVI to 0.1679
+2025-04-23 23:33:41 - gee_ndvi_health - INFO - Updated plot 280741400364601 health to in danger (3) and NDVI to 0.2658
+2025-04-23 23:33:44 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280019700218501, skipping...
+2025-04-23 23:33:46 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280018500187601, skipping...
+2025-04-23 23:33:49 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280020400220001, skipping...
+2025-04-23 23:33:52 - gee_ndvi_health - INFO - Updated plot 280732400132901 health to in danger (3) and NDVI to 0.3783
+2025-04-23 23:33:54 - gee_ndvi_health - INFO - Updated plot 280739700134102 health to in danger (3) and NDVI to 0.1533
+2025-04-23 23:33:57 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280016100229201, skipping...
+2025-04-23 23:33:59 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280020400231604, skipping...
+2025-04-23 23:34:01 - gee_ndvi_health - INFO - Updated plot 280250300194901 health to in danger (3) and NDVI to 0.2497
+2025-04-23 23:34:03 - gee_ndvi_health - INFO - Updated plot 280741600247301 health to in danger (3) and NDVI to 0.2631
+2025-04-23 23:34:07 - gee_ndvi_health - INFO - Updated plot 280741800183804 health to in danger (3) and NDVI to 0.1569
+2025-04-23 23:34:10 - gee_ndvi_health - INFO - Updated plot 280020000333003 health to in danger (3) and NDVI to 0.2467
+2025-04-23 23:34:13 - gee_ndvi_health - WARNING - Could not calculate NDVI for plot 280004200164902, skipping...
+2025-04-23 23:34:13 - gee_ndvi_health - INFO - Processed 10 farms in village 2
+2025-04-23 23:34:13 - gee_ndvi_health - INFO - 
+Processing village_id: 3
+2025-04-23 23:36:24 - gee_ndvi_health - INFO - Using Sentinel-2 image from 2025-04-20 for village 3
+2025-04-23 23:38:35 - gee_ndvi_health - ERROR - Error processing farm plot 280240200318306: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-04-23 23:39:15 - gee_ndvi_health - ERROR - Error processing farm plot 280580100286701: cursor already closed
+2025-04-23 23:39:16 - gee_ndvi_health - ERROR - Error processing farm plot 280240101198304: cursor already closed
+2025-04-23 23:39:19 - gee_ndvi_health - ERROR - Error processing farm plot 280231400208601: cursor already closed
+2025-04-23 23:39:22 - gee_ndvi_health - ERROR - Error processing farm plot 280736707503401: cursor already closed
+2025-04-23 23:39:23 - gee_ndvi_health - ERROR - Error processing farm plot 280500200278901: cursor already closed
+2025-04-23 23:39:25 - gee_ndvi_health - ERROR - Error processing farm plot 280580700417201: cursor already closed
+2025-04-23 23:39:27 - gee_ndvi_health - ERROR - Error processing farm plot 280734100387701: cursor already closed
+2025-04-23 23:39:33 - gee_ndvi_health - ERROR - Error processing farm plot 280734100404301: cursor already closed
+2025-04-23 23:39:36 - gee_ndvi_health - ERROR - Error processing farm plot 280200300416403: cursor already closed
+2025-04-23 23:39:38 - gee_ndvi_health - ERROR - Error processing farm plot 280580100304201: cursor already closed
+2025-04-23 23:39:41 - gee_ndvi_health - ERROR - Error processing farm plot 280200500281501: cursor already closed
+2025-04-23 23:39:44 - gee_ndvi_health - ERROR - Error processing farm plot 280221400409401: cursor already closed
+2025-04-23 23:39:47 - gee_ndvi_health - ERROR - Error processing farm plot 280734200228201: cursor already closed
+2025-04-23 23:39:49 - gee_ndvi_health - ERROR - Error processing farm plot 280250100557003: cursor already closed
+2025-04-23 23:39:51 - gee_ndvi_health - ERROR - Error processing farm plot 280591100496001: cursor already closed
+2025-04-23 23:39:54 - gee_ndvi_health - ERROR - Error processing farm plot 280200200341201: cursor already closed
+2025-04-23 23:39:56 - gee_ndvi_health - ERROR - Error processing farm plot 280240200333701: cursor already closed
+2025-04-23 23:39:58 - gee_ndvi_health - ERROR - Error processing farm plot 280570200342201: cursor already closed
+2025-04-23 23:40:00 - gee_ndvi_health - ERROR - Error processing farm plot 280200500261804: cursor already closed
+2025-04-23 23:40:03 - gee_ndvi_health - ERROR - Error processing farm plot 280240400162101: cursor already closed
+2025-04-23 23:40:05 - gee_ndvi_health - ERROR - Error processing farm plot 280734200226001: cursor already closed
+2025-04-23 23:40:07 - gee_ndvi_health - ERROR - Error processing farm plot 280570200345001: cursor already closed
+2025-04-23 23:40:08 - gee_ndvi_health - ERROR - Error processing farm plot 280580400838301: cursor already closed
+2025-04-23 23:40:09 - gee_ndvi_health - ERROR - Error processing farm plot 280580200193201: cursor already closed
+2025-04-23 23:40:10 - gee_ndvi_health - ERROR - Error processing farm plot 280732100247702: cursor already closed
