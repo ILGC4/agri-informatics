@@ -1,0 +1,16 @@
+2025-05-14 23:51:41 - gee_harvest_readiness - INFO - Script directory: /home/smurfs/agri-info/Utils
+2025-05-14 23:51:41 - gee_harvest_readiness - INFO - Project directory: /home/smurfs/agri-info
+2025-05-14 23:51:41 - gee_harvest_readiness - INFO - Service account path: /home/smurfs/agri-info/api_key/ee-chaitanyamodi-6874ede8f64c.json
+2025-05-14 23:51:41 - gee_harvest_readiness - ERROR - Error in main function: 'NoneType' object has no attribute 'getLogger'
+2025-05-15 00:23:13 - gee_harvest_readiness - INFO - Script directory: /home/smurfs/agri-info/Utils
+2025-05-15 00:23:13 - gee_harvest_readiness - INFO - Project directory: /home/smurfs/agri-info
+2025-05-15 00:23:13 - gee_harvest_readiness - INFO - Service account path: /home/smurfs/agri-info/api_key/ee-chaitanyamodi-6874ede8f64c.json
+2025-05-15 02:01:05 - gee_harvest_readiness - INFO - Script directory: /home/smurfs/agri-info/Utils
+2025-05-15 02:01:05 - gee_harvest_readiness - INFO - Project directory: /home/smurfs/agri-info
+2025-05-15 02:01:05 - gee_harvest_readiness - INFO - Service account path: /home/smurfs/agri-info/api_key/ee-chaitanyamodi-6874ede8f64c.json
+2025-05-15 02:06:01 - gee_harvest_readiness - INFO - Script directory: /home/smurfs/agri-info/Utils
+2025-05-15 02:06:01 - gee_harvest_readiness - INFO - Project directory: /home/smurfs/agri-info
+2025-05-15 02:06:01 - gee_harvest_readiness - INFO - Service account path: /home/smurfs/agri-info/api_key/ee-chaitanyamodi-6874ede8f64c.json
+2025-05-15 11:30:02 - gee_harvest_readiness - INFO - Script directory: /home/smurfs/agri-info/Utils
+2025-05-15 11:30:02 - gee_harvest_readiness - INFO - Project directory: /home/smurfs/agri-info
+2025-05-15 11:30:02 - gee_harvest_readiness - INFO - Service account path: /home/smurfs/agri-info/api_key/ee-chaitanyamodi-6874ede8f64c.json

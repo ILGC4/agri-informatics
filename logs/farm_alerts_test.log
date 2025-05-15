@@ -1,0 +1,22 @@
+====== FARM ALERTS TEST STARTED: Wed May 14 04:27:01 PM EDT 2025 ======
+Testing Python environment:
+Python version: 3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:38:13) [GCC 12.3.0]
+Earth Engine module available
+Testing database connection:
+Database connection successful
+Checking if script exists:
+Script found at /home/smurfs/agri-info/Utils/update_farm_alerts_db.py
+First 10 lines of script:
+import os
+import sys
+import json
+import asyncio
+import asyncpg
+import logging
+import psycopg2
+from datetime import datetime, timedelta
+import pytz
+from typing import List, Dict, Any, Tuple
+Removing test job from crontab:
+Test completed
+====== FARM ALERTS TEST COMPLETED: Wed May 14 04:27:02 PM EDT 2025 ======

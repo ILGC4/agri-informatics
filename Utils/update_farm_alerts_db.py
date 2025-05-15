@@ -168,7 +168,8 @@ DB_PARAMS_SYNC = {
 
 def initialize_gee(service_account_json_path, logger=None):
     """Initialize Google Earth Engine with service account"""
-    logger = logger.getLogger("default_ee")
+    if logger is None:
+        logger = logging.getLogger("default_ee")
     try:
         with open(service_account_json_path) as f:
             service_account_info = json.load(f)
@@ -417,7 +418,7 @@ class SugarcaneHarvestReadinessCalculator(BaseEarthEngineCalculator):
                         # Update harvest readiness in database
                         cur.execute("""
                             UPDATE farm_data
-                            SET harvest_readiness = %s, lai_value = %s,
+                            SET harvest_readiness = %s, lai_value = %s
                             WHERE plot_number = %s
                         """, (readiness_int, lai_value, plot_number))
                         
@@ -624,9 +625,7 @@ class GEENDVICalculator(BaseEarthEngineCalculator):
     def calculate_ndvi(self, image):
         """Add NDVI band to image"""
         ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
-        return image.addBands(ndvi)
-    
-    
+        return image.addBands(ndvi)  
     
     def get_latest_sentinel2_image(self, geometry, days_back=30):
         """Get the latest Sentinel-2 image for a given geometry"""
@@ -1022,9 +1021,7 @@ class WaterLoggingCalculator(BaseEarthEngineCalculator):
         finally:
             # Close connection
             cur.close()
-            conn.close()
-
-    
+            conn.close()    
 
 async def main():
     try:
