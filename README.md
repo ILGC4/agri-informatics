@@ -4,7 +4,7 @@ Creating a sugarcane mill management tool
 
 ## Jupyter Notebooks
 
-To play oorund with and experiment with code
+To play around with and experiment with code
 
 ## Python Utils Scripts
 
