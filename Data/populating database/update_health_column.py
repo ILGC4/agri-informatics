@@ -7,7 +7,7 @@ import numpy as np
 
 # Add the parent directory to sys.path to import local modules
 sys.path.append('/home/smurfs/agri_info2')
-from ndvi_utils import ndvi_time_series_farm
+from Utils.ndvi_utils import ndvi_time_series_farm
 from Utils.farm_level_alerts import assess_sugarcane_health, classify_sugarcane_phase, calculate_days_since_sowing
 
 # Database connection details

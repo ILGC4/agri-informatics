@@ -222,7 +222,7 @@ class PlanetData():
         # print("self geom",self.geom)
         filter_df_name = extract_last_three_digits_string(self.geom)
         item_list, search_df = await self.search()
-        csv_file_path = os.path.join(self.directory, f"{filter_df_name}_filter_df.csv")
+        csv_file_path = os.path.join("planet_csv", f"{filter_df_name}_filter_df.csv")
         search_df.to_csv(csv_file_path, index=False)
         print(f"DataFrame saved to {csv_file_path}")
         

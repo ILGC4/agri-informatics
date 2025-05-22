@@ -31,7 +31,7 @@ if satellite_type in ['S1', 'S2', 'L9']:
     log_file = log_file_map[satellite_type]
 else:
     # Default log file if no satellite type or invalid type
-    log_file = os.path.join(project_dir, 'satellite_scheduler.log')
+    log_file = os.path.join(log_dir, 'satellite_scheduler.log')
 
 # Custom formatter with IST timezone
 class ISTFormatter(logging.Formatter):

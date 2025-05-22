@@ -1,7 +1,7 @@
 import json
 import psycopg2
 import os
-from ndvi_utils import ndvi_time_series_farm
+from Utils.ndvi_utils import ndvi_time_series_farm
 
 # Database connection details
 conn = psycopg2.connect(

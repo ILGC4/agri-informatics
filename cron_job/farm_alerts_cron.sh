@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create a wrapper script for the farm alerts job
-WRAPPER_SCRIPT="/home/smurfs/agri-info/run_farm_alerts.sh"
+WRAPPER_SCRIPT="/home/smurfs/agri-info/cron_job/run_farm_alerts.sh"
 cat > "$WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
 

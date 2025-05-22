@@ -8,7 +8,7 @@ TEMP_CRONTAB=$(mktemp)
 crontab -l > "$TEMP_CRONTAB" 2>/dev/null || echo "" > "$TEMP_CRONTAB"
 
 # Define paths with absolute paths
-PROJECT_DIR="/home/smurfs/agri_info2"
+PROJECT_DIR="/home/smurfs/agri-info"
 SCRIPT_PATH="$PROJECT_DIR/Utils/satellite_gee.py"
 LOG_DIR="$PROJECT_DIR/logs"
 
@@ -44,10 +44,6 @@ echo "Added Landsat cron job (daily at 5:27 PM)"
 # Add Landsat cron test job using full path to echo
 echo "46 17 * * * /bin/echo 'cron test $(date)' >> $LOG_DIR/landsat_cron.log" >> "$TEMP_CRONTAB"
 echo "Added Landsat cron test job (daily at 5:46 PM, using /bin/echo)"
-
-# Add cron environment dump job
-echo "48 17 * * * env > $LOG_DIR/cron_env.log" >> "$TEMP_CRONTAB"
-echo "Added cron environment dump job (daily at 5:48 PM)"
 
 # Install new crontab
 crontab "$TEMP_CRONTAB"

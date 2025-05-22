@@ -1,28 +1,35 @@
 import os
-import asyncio
 import pathlib
 import rasterio
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, UploadFile, Form, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from ndvi_utils import normalize_bands, ndvi_time_series, plot_rgb_and_ndvi
+from Utils.ndvi_utils import normalize_bands, ndvi_time_series, plot_rgb_and_ndvi
 from Utils.farm_level_alerts import generate_sugarcane_alerts
-from Utils.api_utils import PlanetData, read_geojson, get_sugarcane_stage, get_stage_thresholds, fetch_forecast_data
+from Utils.api_utils import PlanetData, get_sugarcane_stage, get_stage_thresholds, fetch_forecast_data
 from fastapi.middleware.cors import CORSMiddleware
 from Utils.satellite_gee import SatelliteDataCollector
 from pydantic import BaseModel
 import pickle
 import asyncpg
-from typing import Dict, List, Optional
+from typing import Dict
 import json
-import requests
 from datetime import datetime, timedelta
 
 app = FastAPI()
 
-OPENWEATHER_API_KEY = "13d9e58f69c0db07c240206f6b6e2662"
+OPENWEATHER_API_KEY = None
+openweather_key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'api_key/openweather.json')
+try:
+    with open(openweather_key_path, 'r') as f:
+        key_data = json.load(f)
+        OPENWEATHER_API_KEY = key_data.get('OPENWEATHER_API_KEY')
+        if not OPENWEATHER_API_KEY:
+            raise ValueError('OPENWEATHER_API_KEY not found in openweather.json')
+except Exception as e:
+    raise RuntimeError(f"Failed to load OpenWeather API key: {e}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,8 +44,6 @@ class ProcessingRequest(BaseModel):
     endDate: str
     interval: int
     geoJsonData: dict
-
-app.mount("/plots", StaticFiles(directory="plots"), name="plots")
 
 class WeatherRequestFarm(BaseModel):
     lat: float
@@ -438,7 +443,6 @@ async def get_all_village_satellite_images():
             status_code=500
         )
 
-# Route to handle fetching results after user clicks "View Results"
 @app.post("/view-results")
 async def view_results():
     try:
@@ -480,7 +484,16 @@ async def fetch_and_process_data():
         geojson_data = processing_data['geojson_data']
 
         # Initialize the PlanetData with the extracted variables
-        credentials = {'API_KEY': 'PLAK6d9e3e666f9b461c92468569a4b270c7'}
+        # Load Planet API key
+        planet_key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'api_key/planet.json')
+        try:
+            with open(planet_key_path, 'r') as f:
+                planet_key_data = json.load(f)
+                credentials = {'API_KEY': planet_key_data.get('API_KEY')}
+                if not credentials['API_KEY']:
+                    raise ValueError('API_KEY not found in planet.json')
+        except Exception as e:
+            raise Exception(f"Failed to load Planet API key: {e}")
 
         planet_data = PlanetData(
             credentials=credentials,
@@ -498,6 +511,7 @@ async def fetch_and_process_data():
         image_data = []  # Store image paths and corresponding plot numbers
         plot_results = []  # To store results for each plot
         ndvi_results = [] # Storing the clipped mean values
+        dates = []  # Local list to store dates
 
         # Loop over geometries (GeoJSON data)
         for geom_idx, geom in enumerate(geojson_data['features']):
@@ -524,7 +538,7 @@ async def fetch_and_process_data():
                 date_str = filename[7:15]  # Extract date from filename
 
                 # Save the date for later use
-                state.dates.append(date_str)
+                dates.append(date_str)
 
                 # Open and process the TIFF file
                 with rasterio.open(tif_file) as src:
@@ -572,7 +586,7 @@ async def fetch_and_process_data():
         print(f"CSV file saved at: {csv_file_path}")
 
         # Return the processed results
-        return {"dates": state.dates, "images": image_data, "csv_file": csv_file_path, "ranked_polygons": ranked_polygons,
+        return {"dates": dates, "images": image_data, "csv_file": csv_file_path, "ranked_polygons": ranked_polygons,
         "geojson_data": geojson_data}
 
     except Exception as e:
