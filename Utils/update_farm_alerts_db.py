@@ -263,7 +263,7 @@ class SugarcaneHarvestReadinessCalculator(BaseEarthEngineCalculator):
         
         # Check SWIR trend (increasing by 5-10% over 3 observations)
         swir_ready = False
-        swir_values = []
+        swir_values = [] 
         
         # Get latest 3 observations for SWIR analysis
         latest_count = min(3, image_count)
