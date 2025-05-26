@@ -12,15 +12,6 @@ The backend is built around several key processing modules:
    - Time Series Analysis - Tracks vegetation changes over time
    - Visualization System - Generates RGB and NDVI comparison plots
 
-**Technology Stack**
-   - Python 3.x - Core runtime environment
-   - Rasterio - Geospatial raster data I/O and processing
-   - GeoPandas - Geospatial data manipulation and analysis
-   - NumPy - Numerical computing and array operations
-   - Matplotlib - Visualization and plotting
-   - Shapely - Geometric operations and spatial analysis
-   - Planet Labs API - Satellite imagery data source
-
 ## Key Features
 1. Image Normalization
    - Function: normalize_bands(img)
@@ -93,15 +84,6 @@ The system integrates with external APIs through the Utils.api_utils module:
    - RGB Composites: True-color satellite imagery
    - NDVI Maps: Color-coded vegetation index visualizations
    - Comparison Plots: Side-by-side RGB and NDVI analysis
-
-## Dependencies 
-```python
-rasterio>=1.3.0
-geopandas>=0.12.0
-numpy>=1.21.0
-matplotlib>=3.5.0
-shapely>=1.8.0
-```
 
 ## Configuration
 The system uses several configurable parameters:

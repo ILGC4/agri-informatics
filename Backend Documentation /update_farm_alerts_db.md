@@ -10,14 +10,6 @@ This backend system provides comprehensive farm monitoring capabilities using sa
 3. Analysis Calculators: Specialized modules for different farm monitoring aspects
 4. Logging System: Comprehensive logging with IST timezone support
 
-**Technology Stack**
-   - Python 3.x: Core programming language
-   - Google Earth Engine (GEE): Satellite imagery processing and analysis
-   - PostgreSQL: Primary database for farm data storage
-   - asyncpg: Asynchronous PostgreSQL driver
-   - psycopg2: Synchronous PostgreSQL driver for batch operations
-   - Sentinel-2: ESA satellite constellation for Earth observation
-
 ## System Components
 ### Base Earth Engine Calculator (BaseEarthEngineCalculator)
 The foundation class that basically handles:
@@ -175,20 +167,15 @@ Each calculator processes farms by the village:
 
 
 ## Deployment Considerations
-1. Environment Setup
-```bash
-pip install earthengine-api
-pip install asyncpg psycopg2-binary
-pip install numpy pytz
-```
 
-2. Service Account Setup
+**Service Account Setup**
    - Create Google Cloud Project with Earth Engine API enabled
    - Generate service account credentials
    - Download JSON key file to api_key/ directory
    - Set appropriate file permissions (600)
 
 ## Monitoring and Maintenance
+
 **Health Checks**
    - Monitor log files for error patterns
    - Verify satellite data availability

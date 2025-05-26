@@ -3,22 +3,6 @@
 ## Overview
 This backend system provides satellite imagery processing capabilities for agricultural monitoring, specifically designed for sugarcane crop analysis. The system integrates with Planet Labs API for satellite data acquisition, PostgreSQL for data persistence, and OpenWeatherMap API for weather forecasting. This code is specifically for downloading satellite images locally for analysis purposes. 
 
-## Architecture Components
-1. Core Technologies
-   - Python 3.x: Primary backend language
-   - PostgreSQL: Database for storing image metadata and coverage information
-   - Planet Labs API: Satellite imagery data source
-   - OpenWeatherMap API: Weather data integration
-   - Next.js Frontend: Web application interface (separate component)
-
-2. Key Libraries and Dependencies
-   - planet: Planet Labs API client
-   - rasterio: Geospatial raster data processing
-   - geopandas: Geospatial data manipulation
-   - pandas: Data analysis and manipulation
-   - asyncio: Asynchronous programming support
-   - requests: HTTP client for external API calls
-
 ## System Architecture
 1. Data Acquisition Layer (PlanetData Class)
 The PlanetData class serves as the primary interface for satellite imagery acquisition:
@@ -62,6 +46,7 @@ The PlanetData class serves as the primary interface for satellite imagery acqui
 To reiterate, this layer includes growth stage specific thresholding for a weather-based alerting system.
 
 **Sugarcane Growth Stage Detection**
+
 Growth Stages:
    - Germination: 0-35 days after planting
    - Tillering: 36-100 days after planting  
@@ -69,12 +54,14 @@ Growth Stages:
    - Ripening: 271+ days after planting
 
 **Environmental Thresholds**
+
 Each growth stage has specific environmental requirements:
    - Temperature ranges (min/max)
    - Humidity levels
    - Rainfall thresholds
 
 **Weather Integration**
+
 Integration with OpenWeatherMap API for forecast data:
    - 5-day weather forecasts
    - Temperature, humidity, and precipitation data
@@ -109,17 +96,6 @@ Integration with OpenWeatherMap API for forecast data:
    - **CSV Files:** {polygon_identifier}_filter_df.csv
    - **Polygon Identifiers:** Generated from coordinate precision
 
-## Error Handling & Resilience
-**Retry Mechanisms:**
-   - Download failures: 3 attempts with exponential backoff
-   - Asset activation: Built-in Planet API retry logic
-   - Database connections: Handled by utility functions
-
-**Exception Management:**
-   - Graceful degradation for missing data
-   - Comprehensive logging for debugging purposes
-   - Exit codes for critical failures
-
 
 ## Configuration Management
 **Environment Variables:**
@@ -149,13 +125,3 @@ Integration with OpenWeatherMap API for forecast data:
    - Database query logging
    - Network request tracing
    - File system permission checks
-
-## Dependencies Installation
-```bash
-pip install planet
-pip install rasterio
-pip install geopandas
-pip install pandas
-pip install requests
-pip install psycopg2-binary  # PostgreSQL adapter
-```

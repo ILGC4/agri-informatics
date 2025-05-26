@@ -123,17 +123,6 @@ The alerts in the frontend are segregated based on Daytime and Nighttime (given 
    - Coordinate range checking
    - Date string format verification
 
-## Dependencies 
-```python
-import json
-import requests
-from datetime import datetime, timedelta
-```
-**Required Packages**
-requests: HTTP library for API calls
-datetime: Date/time manipulation
-json: JSON data processing
-
 ## Configuration
 1. Default Settings
    - Forecast Window: 36 hours
