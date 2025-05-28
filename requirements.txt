@@ -1,0 +1,16 @@
+asyncpg==0.30.0
+earthengine_api==1.5.3
+fastapi==0.115.12
+geemap==0.35.1
+geojson==3.2.0
+geopandas==1.0.1
+matplotlib==3.10.3
+numpy==2.2.6
+pandas==2.2.3
+psycopg2==2.9.10
+pydantic==2.11.5
+pytz==2025.1
+rasterio==1.4.3
+Requests==2.32.3
+Shapely==2.1.1
+uvicorn==0.34.2
