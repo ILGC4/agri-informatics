@@ -3,6 +3,8 @@
 ## Overview
 This directory contains shell scripts responsible for automating satellite data collection and farm alert processing tasks. It manages scheduled obs that run at specific times to collect satellite imagery, process agricultural data, and update farm alert databases automatically.
 
+**Note:** Cron jobs have been removed currently. You can add them again by running the provided shell scripts in this directory (e.g., `./cron_setup.sh`).
+
 ## Script Files
 1. cron_setup.sh
    - **Purpose:** Sets up automated satellite image collection jobs

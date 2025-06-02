@@ -70,6 +70,8 @@ SMURF is a sugarcane mill management and monitoring platform integrating satelli
   { "API_KEY": "<your_planet_api_key_here>" }
   ```
 
+> **Note:** API keys have been removed from the repository for security. The variable names and structure are present; kindly generate your own API keys and add them as described above.
+
 ---
 
 ## Repositories
@@ -100,7 +102,7 @@ SMURF is a sugarcane mill management and monitoring platform integrating satelli
      python3 api_main.py
      ```
 - **Cron jobs:**
-  To add or manage scheduled tasks, run the provided `.sh` shell scripts in the `cron_job/` directory. For example:
+  Cron jobs have been removed currently. You can add them again by running the provided `.sh` shell scripts in the `cron_job/` directory. For example:
   ```
   cd cron_job
   ./cron_setup.sh
@@ -112,6 +114,8 @@ You can find the detailed documentation of the entire backend in agri-info/Backe
 
 ### [react_smurf (Frontend)](https://github.com/SMURFTool/react_smurf)
 
+- **Overview:**
+  The frontend is a Next.js (React) application providing a modern, role-based dashboard for field officers, mill managers, and farmers. It integrates with the FastAPI backend for real-time analytics, farm health alerts, and geospatial data visualization. Only the field officer persona is fully implemented.
 - **Clone:**
   ```
   git clone https://github.com/SMURFTool/react_smurf.git
@@ -129,13 +133,16 @@ You can find the detailed documentation of the entire backend in agri-info/Backe
   Open [http://localhost:3000](http://localhost:3000) in your browser.
   
   To view the current work, log in as a field officer. Example credentials (others can be found in the `field_officer_credentials` table in the database):
-  
   - **Field officer's name:** Chaitanya
   - **Username:** chaitanya123
   - **Password:** chaitanya123
 
+> **Note:** The API call URL (backend endpoint) is stored in the `.env` file in the `/react_smurf` directory. This value has been removed for security. Please add your own backend URL as needed.
+
+For more details on the frontend, refer to `react_smurf/README.md`.
+
 ---
-## How to Run
+## How to Run the Project:
 1. **SSH into the server and activate the conda environment.**
 2. **Start the backend FastAPI server:**
 3. **Start the frontend Next.js server.**

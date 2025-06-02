@@ -18,7 +18,7 @@ This directory contains all the API key files required for external service inte
 - Enable the backend to authenticate and interact with external APIs.
 
 **Note:**
-- For instructions on obtaining and configuring these keys, see the main documentation (`SMURF_SETUP.md`).
+- API keys have been removed from the repository for security. The variable names and structure are present; kindly generate your own API keys and add them as described. For instructions on obtaining and configuring these keys, see the main documentation (`SMURF_SETUP.md`).
 
 ---
 

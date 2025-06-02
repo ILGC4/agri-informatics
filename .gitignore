@@ -1,4 +1,4 @@
-Images/**/*.tif
+Images/
 __pycache__/
 Utils/__pycache__/
 Data/new_data/
