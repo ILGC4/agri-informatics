@@ -50,34 +50,12 @@ SMURF is a sugarcane mill management and monitoring platform integrating satelli
 
 ---
 
-## Earth Engine
-- **Service Account:**  Place your Earth Engine service account JSON in `agri-info/api_key/`
-- **Earth Engine ID:**  (Add your service account email or ID here)
-
-## Weather API (OpenWeather)
-- **API Key:** Place your OpenWeather API key JSON in `agri-info/api_key/openweather.json`
-- **Get your API key:** [OpenWeather API Key Registration](https://home.openweathermap.org/api_keys)
-- **File format:**
-  ```json
-  { "OPENWEATHER_API_KEY": "<your_api_key_here>" }
-  ```
-
-## Planet API
-- **API Key:** Place your Planet API key JSON in `agri-info/api_key/planet.json`
-- **Get your API key:** [Planet API Key Registration](https://www.planet.com/account/#/)
-- **File format:**
-  ```json
-  { "API_KEY": "<your_planet_api_key_here>" }
-  ```
-
-> **Note:** API keys have been removed from the repository for security. The variable names and structure are present; kindly generate your own API keys and add them as described above.
-
----
-
 ## Repositories
 
 ### [agri-info (Backend)](https://github.com/SMURFTool/agri-informatics)
 
+- **Overview:**
+  The backend is a FastAPI application that provides RESTful APIs for satellite data collection, weather-based analytics, farm health alerts, and geospatial database access. It integrates with external APIs (Planet, OpenWeather, Google Earth Engine) and a PostgreSQL/PostGIS database. All core data processing and business logic for the SMURF platform is implemented here.
 - **Clone:**
   ```
   git clone https://github.com/SMURFTool/agri-informatics.git
@@ -101,6 +79,36 @@ SMURF is a sugarcane mill management and monitoring platform integrating satelli
      ```
      python3 api_main.py
      ```
+- **API Keys:**
+  The `api_key` directory in `agri-info/` stores all API key files required for backend operation.
+  
+  > **Note:** API keys have been removed from the repositories for security reasons. The variable names and structure are present; kindly generate your own API keys and add them as described below.
+
+  **Earth Engine**
+  - **Service Account:** Place your Earth Engine service account JSON in `agri-info/api_key/`.
+  - **Important:**  
+    If you generate a new service account JSON, you must update the filename/path in the following files and lines:
+    - `api_main.py`, line 167
+    - `Utils/satellite_gee.py`, line 527
+    - `Utils/update_farm_alerts_db.py`, line 1033  
+    Replace all references to `ee-chaitanyamodi-6874ede8f64c.json` with your new JSON filename.
+
+  **Weather API (OpenWeather)**
+  - **API Key:** Place your OpenWeather API key JSON in `agri-info/api_key/openweather.json`
+  - **Get your API key:** [OpenWeather API Key Registration](https://home.openweathermap.org/api_keys)
+  - **File format:**
+    ```json
+    { "OPENWEATHER_API_KEY": "<your_api_key_here>" }
+    ```
+
+  **Planet API**
+  - **API Key:** Place your Planet API key JSON in `agri-info/api_key/planet.json`
+  - **Get your API key:** [Planet API Key Registration](https://www.planet.com/account/#/)
+  - **File format:**
+    ```json
+    { "API_KEY": "<your_planet_api_key_here>" }
+    ```
+
 - **Cron jobs:**
   Cron jobs have been removed currently. You can add them again by running the provided `.sh` shell scripts in the `cron_job/` directory. For example:
   ```
@@ -109,8 +117,19 @@ SMURF is a sugarcane mill management and monitoring platform integrating satelli
   ```
   See the `cron_job/` directory for setup scripts and further documentation.
 
+- **Database:**
+  The backend uses a PostgreSQL database with the PostGIS extension for geospatial data. The database contains four main tables:
+  - `farm_data`: Stores individual farm plot information, boundaries, crop details, and health metrics.
+  - `village_data`: Contains village boundaries, centroids, and field officer assignments.
+  - `field_officer_credentials`: Manages authentication and user info for field officers.
+  - `satellite_images`: Tracks metadata for satellite imagery used in analysis.
+
+  All geometry data uses the WGS84 coordinate system (SRID 4326). The schema is designed for efficient geospatial queries and agricultural monitoring, supporting features like NDVI, waterlogging, and harvest readiness.
+
+  For more details on the schema, table relationships, and utility scripts, see `agri-info/Backend_Documentation/database_documentation.md`.
+
 - **Detailed Documentation:**
-You can find the detailed documentation of the entire backend in agri-info/Backend Documentation/
+You can find the detailed documentation of the entire backend, including the database, in agri-info/Backend_Documentation/
 
 ### [react_smurf (Frontend)](https://github.com/SMURFTool/react_smurf)
 
@@ -137,7 +156,7 @@ You can find the detailed documentation of the entire backend in agri-info/Backe
   - **Username:** chaitanya123
   - **Password:** chaitanya123
 
-> **Note:** The API call URL (backend endpoint) is stored in the `.env` file in the `/react_smurf` directory. This value has been removed for security. Please add your own backend URL as needed.
+> **Note:** API key have been removed from the repository for security reasons. The Google Maps API key required for the frontend must be placed in the `.env` file inside the `/react_smurf` directory. Please note that this is separate from the Earth Engine API key used in the backend. Please generate your own Google Maps API key and add it to the `.env` file as described in the frontend documentation.
 
 For more details on the frontend, refer to `react_smurf/README.md`.
 
